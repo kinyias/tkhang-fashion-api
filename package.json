@@ -1,11 +1,12 @@
 {
-  "name": "repair-computer-api",
+  "name": "tkhang-fashion-api",
   "version": "1.0.0",
-  "description": "API for Repair Computer Service",
+  "description": "API for tkhang-fashion",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
+    "build": "prisma generate",
     "test": "jest"
   },
   "dependencies": {
