@@ -1,0 +1,35 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model NguoiDung {
+  id            Int      @id @default(autoincrement()) @map("ma_nguoi_dung")
+  firstName      String?  @map("ho") @db.VarChar(255)
+  lastName     String?  @map("ten") @db.VarChar(255)
+  email         String   @unique @db.VarChar(255)
+  password      String? @map("mat_khau") @db.VarChar(255)
+  phoneNumber   String?  @map("so_dien_thoai") @db.VarChar(20)
+  address       String?   @map("dia_chi") @db.Text
+  role          String   @map("vai_tro") @db.VarChar(50)
+  googleId      String?  @unique @map("google_id") @db.VarChar(255)
+  refreshToken  String?  @map("refresh_token") @db.Text
+  emailVerified Boolean  @default(false) @map("xac_thuc_email")
+  verifyToken   String?  @map("ma_xac_nhan") @db.VarChar(255)
+  resetToken    String?  @map("ma_dat_lai") @db.VarChar(255)
+  resetExpires  DateTime? @map("han_ma_dat_lai")
+  createdAt     DateTime @default(now()) @map("ngay_tao")
+  updatedAt     DateTime @updatedAt @map("ngay_cap_nhat")
+
+  @@map("nguoidung")
+}
