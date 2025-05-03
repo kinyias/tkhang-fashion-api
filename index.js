@@ -3,15 +3,15 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const passport = require('passport');
-const { errorHandler } = require('./middlewares/errorMiddleware');
-const rateLimiter = require('./middlewares/rateLimiter');
+const { errorHandler } = require('./src/middlewares/errorMiddleware');
+const rateLimiter = require('./src/middlewares/rateLimiter');
 
 // Import routes
-const authRoutes = require('./routes/auth.route');
-const userRoutes = require('./routes/user.route');
+const authRoutes = require('./src/routes/auth.route');
+const userRoutes = require('./src/routes/user.route');
 
 // Import passport config
-require('./config/passport');
+require('./src/config/passport');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
