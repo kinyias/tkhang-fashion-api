@@ -21,9 +21,9 @@ function generateTokens(user) {
   // Access token
   const accessToken = jwt.sign(
     {
-      sub: user.id,
+      sub: user.ma,
       email: user.email,
-      role: user.role,
+      vai_tro: user.vai_tro,
     },
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_ACCESS_EXPIRATION }
@@ -32,7 +32,7 @@ function generateTokens(user) {
   // Refresh token
   const refreshToken = jwt.sign(
     {
-      sub: user.id,
+      sub: user.ma,
     },
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_REFRESH_EXPIRATION }
@@ -45,12 +45,11 @@ function generateTokens(user) {
 async function register(userData) {
   const {
     email,
-    password,
-    fristName,
-    lastName,
-    phoneNumber,
-    address,
-    role = 'customer',
+    mat_khau,
+    ho,
+    ten,
+    so_dien_thoai,
+    vai_tro = 'khach_hang',
   } = userData;
 
   // Check if user exists
@@ -63,7 +62,7 @@ async function register(userData) {
   }
 
   // Hash password
-  const hashedPassword = await hashPassword(password);
+  const hashedPassword = await hashPassword(mat_khau);
 
   // Generate verification token
   const verifyToken = uuidv4();
@@ -72,13 +71,12 @@ async function register(userData) {
   const user = await prisma.nguoiDung.create({
     data: {
       email,
-      password: hashedPassword,
-      fristName,
-      lastName,
-      phoneNumber,
-      address,
-      role,
-      verifyToken,
+      mat_khau: hashedPassword,
+      ho,
+      ten,
+      so_dien_thoai,
+      vai_tro,
+      ma_xac_nhan: verifyToken,
     },
   });
 
@@ -86,33 +84,33 @@ async function register(userData) {
   await emailService.sendVerificationEmail(user.email, verifyToken);
 
   return {
-    id: user.id,
+    ma: user.ma,
     email: user.email,
-    firstName: user.firstName,
-    lastName: user.lastName,
-    role: user.role,
+    ho: user.ho,
+    ten: user.ten,
+    vai_tro: user.role,
   };
 }
 
 // Login user
-async function login(email, password) {
+async function login(email, mat_khau) {
   // Find user
   const user = await prisma.nguoiDung.findUnique({
     where: { email },
   });
 
-  if (!user || !user.password) {
+  if (!user || !user.mat_khau) {
     throw new Error('Sai mật khẩu');
   }
 
   // Check password
-  const validPassword = await comparePassword(password, user.password);
+  const validPassword = await comparePassword(mat_khau, user.mat_khau);
   if (!validPassword) {
     throw new Error('Sai mật khẩu');
   }
 
   // Check if email is verified
-  if (!user.emailVerified) {
+  if (!user.xac_thuc_email) {
     throw new Error('Email chưa được xác minh');
   }
 
@@ -121,16 +119,16 @@ async function login(email, password) {
 
   // Store refresh token in database
   await prisma.nguoiDung.update({
-    where: { id: user.id },
+    where: { ma: user.ma },
     data: { refreshToken },
   });
 
   return {
     user: {
-      id: user.id,
+      ma: user.ma,
       email: user.email,
-      firstName: user.fristName,
-      lastName: user.lastName,
+      ho: user.ho,
+      ten: user.ten,
       role: user.role,
     },
     tokens: {
@@ -143,7 +141,7 @@ async function login(email, password) {
 // Verify email
 async function verifyEmail(token) {
   const user = await prisma.nguoiDung.findFirst({
-    where: { verifyToken: token },
+    where: { ma_xac_nhan: token },
   });
 
   if (!user) {
@@ -152,10 +150,10 @@ async function verifyEmail(token) {
 
   // Update user
   await prisma.nguoiDung.update({
-    where: { id: user.id },
+    where: { ma: user.ma },
     data: {
-      emailVerified: true,
-      verifyToken: null,
+      xac_thuc_email: true,
+      ma_xac_nhan: null,
     },
   });
 
@@ -180,10 +178,10 @@ async function requestPasswordReset(email) {
 
   // Update user
   await prisma.nguoiDung.update({
-    where: { id: user.id },
+    where: { ma: user.ma },
     data: {
-      resetToken,
-      resetExpires,
+      ma_dat_lai:resetToken,
+      han_ma_dat_lai:resetExpires,
     },
   });
 
@@ -199,8 +197,8 @@ async function requestPasswordReset(email) {
 async function resetPassword(token, newPassword) {
   const user = await prisma.nguoiDung.findFirst({
     where: {
-      resetToken: token,
-      resetExpires: {
+      ma_dat_lai: token,
+      han_ma_dat_lai: {
         gt: new Date(),
       },
     },
@@ -215,11 +213,11 @@ async function resetPassword(token, newPassword) {
 
   // Update user
   await prisma.nguoiDung.update({
-    where: { id: user.id },
+    where: { ma: user.ma },
     data: {
-      password: hashedPassword,
-      resetToken: null,
-      resetExpires: null,
+      mat_khau: hashedPassword,
+      ma_dat_lai: null,
+      han_ma_dat_lai: null,
     },
   });
 
@@ -237,7 +235,7 @@ async function refreshAccessToken(token) {
     // Find user with the token
     const user = await prisma.nguoiDung.findFirst({
       where: {
-        id: decoded.sub,
+        ma: decoded.sub,
         refreshToken: token,
       },
     });
@@ -251,7 +249,7 @@ async function refreshAccessToken(token) {
 
     // Update refresh token in database
     await prisma.nguoiDung.update({
-      where: { id: user.id },
+      where: { ma: user.ma },
       data: { refreshToken },
     });
 
@@ -267,7 +265,7 @@ async function refreshAccessToken(token) {
 // Logout
 async function logout(userId) {
   await prisma.nguoiDung.update({
-    where: { id: userId },
+    where: { ma: userId },
     data: { refreshToken: null },
   });
 

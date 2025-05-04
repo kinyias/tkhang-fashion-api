@@ -14,7 +14,7 @@ passport.use(
   new JwtStrategy(jwtOptions, async (payload, done) => {
     try {
       const user = await prisma.nguoiDung.findUnique({
-        where: { id: payload.sub },
+        where: { ma: payload.sub },
       });
 
       if (!user) {
@@ -40,7 +40,7 @@ passport.use(
     async (accessToken, refreshToken, profile, done) => {
       try {
         let user = await prisma.nguoiDung.findUnique({
-          where: { googleId: profile.id },
+          where: { ma_google: profile.id },
         });
 
         if (!user) {
@@ -52,25 +52,25 @@ passport.use(
           if (existingUser) {
             // Link Google account to existing user
             user = await prisma.nguoiDung.update({
-              where: { id: existingUser.id },
-              data: { googleId: profile.id },
+              where: { ma: existingUser.ma },
+              data: { ma_google: profile.id },
             });
           } else {
             // Create new user
             const nameParts = profile.displayName
               ? profile.displayName.split(' ')
               : ['Unknown'];
-            const firstName = nameParts[0];
-            const lastName =
+            const ho = nameParts[0];
+            const ten =
               nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
             user = await prisma.nguoiDung.create({
               data: {
-                googleId: profile.id,
+                ma_google: profile.id,
                 email: profile.emails[0].value,
-                firstName: firstName,
-                lastName: lastName,
-                role: 'khachhang',
-                emailVerified: true,
+                ho: ho,
+                ten: ten,
+                vai_tro: 'khach_hang',
+                xac_thuc_email: true,
               },
             });
           }

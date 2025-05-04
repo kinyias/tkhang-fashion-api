@@ -7,7 +7,7 @@ const rateLimiter = rateLimit({
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
   message: {
-    message: 'Too many requests, please try again later.'
+    message: 'Quá nhiều yêu cầu, vui lòng thử lại sau.'
   }
 });
 

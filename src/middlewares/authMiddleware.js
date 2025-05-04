@@ -24,7 +24,7 @@ function authorize(roles = []) {
   return [
     authenticate,
     (req, res, next) => {
-      if (roles.length && !roles.includes(req.user.role)) {
+      if (roles.length && !roles.includes(req.user.vai_tro)) {
         return res.status(403).json({ message: 'Forbidden' });
       }
       next();

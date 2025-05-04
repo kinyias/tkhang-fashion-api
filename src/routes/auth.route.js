@@ -11,18 +11,17 @@ const router = express.Router();
 router.post(
   '/register',
   [
-    body('email').isEmail().withMessage('Enter a valid email'),
-    body('password')
+    body('email').isEmail().withMessage('Nhập email hợp lệ'),
+    body('mat_khau')
       .isLength({ min: 8 })
-      .withMessage('Password must be at least 8 characters'),
-    body('firstName').optional().isString(),
-    body('lastName').optional().isString(),
-    body('phoneNumber').optional().isString(),
-    body('address').optional().isString(),
-    body('role')
+      .withMessage('Mật khẩu phải có ít nhất 8 ký tự'),
+    body('ho').optional().isString(),
+    body('ten').optional().isString(),
+    body('so_dien_thoai').optional().isString(),
+    body('vai_tro')
       .optional()
-      .isIn(['customer', 'admin', 'technician'])
-      .withMessage('Invalid role')
+      .isIn(['khach_hang', 'admin'])
+      .withMessage('Invalid role'),
   ],
   authController.register
 );
@@ -31,8 +30,8 @@ router.post(
 router.post(
   '/login',
   [
-    body('email').isEmail().withMessage('Enter a valid email'),
-    body('password').notEmpty().withMessage('Password is required')
+    body('email').isEmail().withMessage('Nhập email hợp lệ'),
+    body('mat_khau').notEmpty().withMessage('Mật khẩu không được để trống'),
   ],
   authController.login
 );
@@ -44,10 +43,7 @@ router.get(
 );
 
 // Google OAuth callback
-router.get(
-  '/callback/google',
-  authController.googleCallback
-);
+router.get('/callback/google', authController.googleCallback);
 
 // Verify email
 router.get('/verify-email/:token', authController.verifyEmail);
@@ -65,7 +61,7 @@ router.post(
   [
     body('password')
       .isLength({ min: 8 })
-      .withMessage('Password must be at least 8 characters')
+      .withMessage('Mật khẩu phải có ít nhất 8 ký tự'),
   ],
   authController.resetPassword
 );

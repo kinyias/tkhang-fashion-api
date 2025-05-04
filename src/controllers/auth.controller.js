@@ -14,12 +14,11 @@ async function register(req, res, next) {
 
     const userData = {
       email: req.body.email,
-      password: req.body.password,
-      firstName: req.body.firstName,
-      lastName: req.body.lastName,
-      phoneNumber: req.body.phoneNumber,
-      address: req.body.address,
-      role: req.body.role || 'khachhang',
+      mat_khau: req.body.mat_khau,
+      ho: req.body.ho,
+      ten: req.body.ten,
+      so_dien_thoai: req.body.so_dien_thoai,
+      role: req.body.role || 'khach_hang',
     };
 
     const user = await authService.register(userData);
@@ -42,11 +41,11 @@ async function login(req, res, next) {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { email, password } = req.body;
-    const result = await authService.login(email, password);
+    const { email, mat_khau } = req.body;
+    const result = await authService.login(email, mat_khau);
 
     return res.status(200).json({
-      message: 'Login successful',
+      message: 'Đăng nhập thành công',
       ...result,
     });
   } catch (error) {
@@ -69,7 +68,7 @@ function googleCallback(req, res, next) {
 
       // Store refresh token
       await prisma.nguoiDung.update({
-        where: { id: user.id },
+        where: { ma: user.ma },
         data: { refreshToken },
       });
 
@@ -109,8 +108,8 @@ async function requestPasswordReset(req, res, next) {
 async function resetPassword(req, res, next) {
   try {
     const { token } = req.params;
-    const { password } = req.body;
-    const result = await authService.resetPassword(token, password);
+    const { mat_khau } = req.body;
+    const result = await authService.resetPassword(token, mat_khau);
     return res.status(200).json(result);
   } catch (error) {
     next(error);
@@ -131,7 +130,7 @@ async function refreshToken(req, res, next) {
 // Logout
 async function logout(req, res, next) {
   try {
-    const result = await authService.logout(req.user.id);
+    const result = await authService.logout(req.user.ma);
     return res.status(200).json(result);
   } catch (error) {
     next(error);

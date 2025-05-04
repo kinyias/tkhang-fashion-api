@@ -1,7 +1,7 @@
 // User routes
 const express = require('express');
 const { body } = require('express-validator');
-const userController = require('../controllers/user.controller');
+const userController = require('../controllers/nguoidung.controller');
 const { authenticate, authorize } = require('../middlewares/authMiddleware');
 
 const router = express.Router();
@@ -14,10 +14,10 @@ router.put(
   '/profile',
   authenticate,
   [
-    body('fristName').optional().isString(),
-    body('lastName').optional().isString(),
-    body('phoneNumber').optional().isString(),
-    body('address').optional().isString(),
+    body('ho').optional().isString(),
+    body('ten').optional().isString(),
+    body('so_dien_thoai').optional().isString(),
+
   ],
   userController.updateProfile
 );
@@ -29,10 +29,10 @@ router.put(
   [
     body('currentPassword')
       .notEmpty()
-      .withMessage('Current password is required'),
+      .withMessage('Mât khẩu hiện tại không được để trống'),
     body('newPassword')
       .isLength({ min: 8 })
-      .withMessage('New password must be at least 8 characters'),
+      .withMessage('Mât khẩu mới phải có ít nhất 8 ký tự'),
   ],
   userController.changePassword
 );
@@ -41,13 +41,13 @@ router.put(
 router.get('/admin/users', authorize(['admin']), async (req, res) => {
   const users = await prisma.nguoiDung.findMany({
     select: {
-      id: true,
+      ma: true,
       email: true,
-      firstName: true,
-      lastName: true,
-      role: true,
-      emailVerified: true,
-      createdAt: true,
+      ho: true,
+      ten: true,
+      vai_tro: true,
+      xac_thuc_email: true,
+      ngay_tao: true,
     },
   });
   res.json(users);

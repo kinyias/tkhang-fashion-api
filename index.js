@@ -8,7 +8,7 @@ const rateLimiter = require('./src/middlewares/rateLimiter');
 
 // Import routes
 const authRoutes = require('./src/routes/auth.route');
-const userRoutes = require('./src/routes/user.route');
+const userRoutes = require('./src/routes/nguoidung.route');
 
 // Import passport config
 require('./src/config/passport');

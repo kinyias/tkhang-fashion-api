@@ -14,22 +14,221 @@ datasource db {
 }
 
 model NguoiDung {
-  id            Int      @id @default(autoincrement()) @map("ma_nguoi_dung")
-  firstName      String?  @map("ho") @db.VarChar(255)
-  lastName     String?  @map("ten") @db.VarChar(255)
-  email         String   @unique @db.VarChar(255)
-  password      String? @map("mat_khau") @db.VarChar(255)
-  phoneNumber   String?  @map("so_dien_thoai") @db.VarChar(20)
-  address       String?   @map("dia_chi") @db.Text
-  role          String   @map("vai_tro") @db.VarChar(50)
-  googleId      String?  @unique @map("google_id") @db.VarChar(255)
-  refreshToken  String?  @map("refresh_token") @db.Text
-  emailVerified Boolean  @default(false) @map("xac_thuc_email")
-  verifyToken   String?  @map("ma_xac_nhan") @db.VarChar(255)
-  resetToken    String?  @map("ma_dat_lai") @db.VarChar(255)
-  resetExpires  DateTime? @map("han_ma_dat_lai")
-  createdAt     DateTime @default(now()) @map("ngay_tao")
-  updatedAt     DateTime @updatedAt @map("ngay_cap_nhat")
+  ma            Int       @id @default(autoincrement()) @map("ma")
+  ho     String?   @map("ho") @db.VarChar(255)
+  ten      String?   @map("ten") @db.VarChar(255)
+  email         String    @unique @db.VarChar(255)
+  mat_khau      String?   @map("mat_khau") @db.VarChar(255)
+  so_dien_thoai   String?   @map("so_dien_thoai") @db.VarChar(20)
+  vai_tro          String    @map("vai_tro") @db.VarChar(50)
+  ma_google      String?   @unique @map("ma_google") @db.VarChar(255)
+  refreshToken  String?   @map("refreshToken") @db.Text
+  xac_thuc_email Boolean   @default(false) @map("xac_thuc_email")
+  ma_xac_nhan   String?   @map("ma_xac_nhan") @db.VarChar(255)
+  ma_dat_lai    String?   @map("ma_dat_lai") @db.VarChar(255)
+  han_ma_dat_lai  DateTime? @map("han_ma_dat_lai")
+  ngay_tao     DateTime  @default(now()) @map("ngay_tao")
+  ngay_cap_nhat     DateTime  @updatedAt @map("ngay_cap_nhat")
 
-  @@map("nguoidung")
+  donHangs DonHang[]
+  danhGias DanhGia[]
+  tinTucs  TinTuc[]
+
+  @@map("NguoiDung")
+}
+
+// ThuongHieu
+model ThuongHieu {
+  ma       Int       @id @default(autoincrement())
+  ten      String    @db.VarChar(255)
+  mota     String?   @db.Text
+  sanPhams SanPham[]
+}
+
+// DanhMuc
+model DanhMuc {
+  ma           Int           @id @default(autoincrement())
+  ten          String        @db.VarChar(255)
+  mota         String?       @db.Text
+  sanPhams     SanPham[]
+  loaiSanPhams LoaiSanPham[]
+}
+
+// LoaiSanPham
+model LoaiSanPham {
+  ma        Int       @id @default(autoincrement())
+  ten       String    @db.VarChar(255)
+  mota      String?   @db.Text
+  hinhanh   String?   @db.Text
+  madanhmuc Int
+  danhMuc   DanhMuc   @relation(fields: [madanhmuc], references: [ma])
+  sanPhams  SanPham[]
+}
+
+// SanPham
+model SanPham {
+  ma            Int      @id @default(autoincrement())
+  ten           String   @db.VarChar(255)
+  mota          String?  @db.Text
+  giaban        Decimal
+  giagiam       Decimal?
+  hinhanh       String?  @db.Text
+  trangthai     Boolean  @default(true)
+  madanhmuc     Int
+  maloaisanpham Int
+  mathuonghieu  Int
+
+  danhMuc     DanhMuc     @relation(fields: [madanhmuc], references: [ma])
+  loaiSanPham LoaiSanPham @relation(fields: [maloaisanpham], references: [ma])
+  thuongHieu  ThuongHieu  @relation(fields: [mathuonghieu], references: [ma])
+
+  bienThes        BienThe[]
+  kichCos         KichCo[]
+  mauSacs         MauSac[]
+  chiTietDonHangs ChiTietDonHang[]
+  danhGias        DanhGia[]
+}
+
+// BienThe
+model BienThe {
+  ma       Int     @id @default(autoincrement())
+  gia      Decimal
+  soluong  Int
+  msp      Int
+  mamausac Int
+  makichco Int
+
+  sanPham         SanPham          @relation(fields: [msp], references: [ma])
+  mauSac          MauSac           @relation(fields: [mamausac], references: [ma])
+  kichCo          KichCo           @relation(fields: [makichco], references: [ma])
+  chiTietDonHangs ChiTietDonHang[]
+}
+
+// KichCo
+model KichCo {
+  ma   Int    @id @default(autoincrement())
+  ten  String
+  masp Int
+
+  sanPham  SanPham   @relation(fields: [masp], references: [ma])
+  bienThes BienThe[]
+}
+
+// MauSac
+model MauSac {
+  ma     Int    @id @default(autoincrement())
+  ten    String
+  ma_mau String
+  masp   Int
+
+  sanPham        SanPham         @relation(fields: [masp], references: [ma])
+  bienThes       BienThe[]
+  hinhAnhMauSacs HinhAnhMauSac[]
+}
+
+// HinhAnhMauSac
+model HinhAnhMauSac {
+  ma       Int     @id @default(autoincrement())
+  hinhAnh  String
+  anhChinh Boolean
+  mamausac Int
+
+  mauSac MauSac @relation(fields: [mamausac], references: [ma])
+}
+
+// DonHang
+model DonHang {
+  ma              Int              @id @default(autoincrement())
+  ngaydat         DateTime         @default(now())
+  giamgia         Decimal?
+  tamtinh         Decimal
+  diachi          String
+  thanhpho        String
+  quan            String
+  phuong          String
+  ngaygiao        DateTime?
+  ngayhuy         DateTime?
+  sdt             String
+  tonggia         Decimal
+  trangthai       TrangThaiDonHang
+  ghichu          String?
+  manguoidung     Int
+  maKhuyenMai     Int?
+  khuyenMai       KhuyenMai?       @relation(fields: [maKhuyenMai], references: [ma])
+  nguoiDung       NguoiDung        @relation(fields: [manguoidung], references: [ma])
+  chiTietDonHangs ChiTietDonHang[]
+  thanhToans      ThanhToan[]
+}
+
+// ChiTietDonHang
+model ChiTietDonHang {
+  ma        Int     @id @default(autoincrement())
+  soluong   Int
+  dongia    Decimal
+  masp      Int
+  madh      Int
+  mabienthe Int
+
+  sanPham SanPham @relation(fields: [masp], references: [ma])
+  donHang DonHang @relation(fields: [madh], references: [ma])
+  bienThe BienThe @relation(fields: [mabienthe], references: [ma])
+}
+
+// KhuyenMai
+model KhuyenMai {
+  ma            Int           @id @default(autoincrement())
+  ten           String        @db.VarChar(255)
+  loaikhuyenmai LoaiKhuyenMai
+  giatrigiam    Float
+  giatridonhang Float
+  ngaybatdat    DateTime
+  ngayketthuc   DateTime
+  DonHang       DonHang[]
+}
+
+// ThanhToan
+model ThanhToan {
+  ma            Int      @id @default(autoincrement())
+  phuongthuc    String   @db.VarChar(100)
+  ngaythanhtoan DateTime
+  trangthai     Boolean
+  madh          Int
+
+  donHang DonHang @relation(fields: [madh], references: [ma])
+}
+
+// DanhGia
+model DanhGia {
+  ma          Int    @id @default(autoincrement())
+  sosao       Int
+  binhluan    String
+  manguoidung Int
+  masp        Int
+
+  nguoiDung NguoiDung @relation(fields: [manguoidung], references: [ma])
+  sanPham   SanPham   @relation(fields: [masp], references: [ma])
+}
+
+// TinTuc
+model TinTuc {
+  ma          Int      @id @default(autoincrement())
+  tieude      String
+  noidung     String
+  ngaydang    DateTime
+  hinhanh     String
+  manguoidung Int
+
+  nguoiDung NguoiDung @relation(fields: [manguoidung], references: [ma])
+}
+
+enum TrangThaiDonHang {
+  da_dat
+  dang_xu_ly
+  dang_giao_hang
+  da_giao_hang
+}
+
+enum LoaiKhuyenMai {
+  giam_gia_theo_tien
+  giam_gia_theo_phan_tram
 }

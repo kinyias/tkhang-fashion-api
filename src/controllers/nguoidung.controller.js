@@ -5,18 +5,17 @@ const prisma = new PrismaClient();
 async function getProfile(req, res, next) {
   try {
     const user = await prisma.nguoiDung.findUnique({
-      where: { id: req.user.id },
+      where: { ma: req.user.ma },
       select: {
-        id: true,
+        ma: true,
         email: true,
-        firstName: true,
-        lastName: true,
-        phoneNumber: true,
-        address: true,
-        role: true,
-        emailVerified: true,
-        createdAt: true,
-        updatedAt: true,
+        ho: true,
+        ten: true,
+        so_dien_thoai: true,
+        vai_tro: true,
+        xac_thuc_email: true,
+        ngay_tao: true,
+        ngay_cap_nhat: true,
       },
     });
 
@@ -33,26 +32,24 @@ async function getProfile(req, res, next) {
 // Update user profile
 async function updateProfile(req, res, next) {
   try {
-    const { firstName, lastName, phoneNumber, address } = req.body;
+    const { ho, ten, so_dien_thoai } = req.body;
 
     const updatedUser = await prisma.nguoiDung.update({
-      where: { id: req.user.id },
+      where: { ma: req.user.ma },
       data: {
-        firstName,
-        lastName,
-        phoneNumber,
-        address,
+        ho,
+        ten,
+        so_dien_thoai,
       },
       select: {
-        id: true,
+        ma: true,
         email: true,
-        firstName: true,
-        lastName: true,
-        phoneNumber: true,
-        address: true,
-        role: true,
-        emailVerified: true,
-        updatedAt: true,
+        ho: true,
+        ten: true,
+        so_dien_thoai: true,
+        vai_tro: true,
+        xac_thuc_email: true,
+        ngay_cap_nhat: true,
       },
     });
 
@@ -71,7 +68,7 @@ async function changePassword(req, res, next) {
     const { currentPassword, newPassword } = req.body;
 
     const user = await prisma.nguoiDung.findUnique({
-      where: { id: req.user.id },
+      where: { ma: req.user.ma },
     });
 
     if (!user) {
@@ -79,7 +76,7 @@ async function changePassword(req, res, next) {
     }
 
     // Check current password
-    const validPassword = await bcrypt.compare(currentPassword, user.password);
+    const validPassword = await bcrypt.compare(currentPassword, user.mat_khau);
     if (!validPassword) {
       return res.status(400).json({ message: 'Sai password' });
     }
