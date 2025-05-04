@@ -60,6 +60,7 @@ model LoaiSanPham {
   ten       String    @db.VarChar(255)
   mota      String?   @db.Text
   hinhanh   String?   @db.Text
+  noibat    Boolean  @default(false)
   madanhmuc Int
   danhMuc   DanhMuc   @relation(fields: [madanhmuc], references: [ma])
   sanPhams  SanPham[]
@@ -73,6 +74,7 @@ model SanPham {
   giaban        Decimal
   giagiam       Decimal?
   hinhanh       String?  @db.Text
+  noibat        Boolean  @default(false)
   trangthai     Boolean  @default(true)
   madanhmuc     Int
   maloaisanpham Int
