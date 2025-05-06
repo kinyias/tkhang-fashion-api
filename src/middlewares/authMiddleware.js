@@ -8,7 +8,7 @@ function authenticate(req, res, next) {
       return next(err);
     }
     if (!user) {
-      return res.status(401).json({ message: 'Unauthorized' });
+      return res.status(401).json({ message: 'Không có quyền thực hiện hành động này' });
     }
     req.user = user;
     next();
@@ -25,7 +25,7 @@ function authorize(roles = []) {
     authenticate,
     (req, res, next) => {
       if (roles.length && !roles.includes(req.user.vai_tro)) {
-        return res.status(403).json({ message: 'Forbidden' });
+        return res.status(403).json({ message: 'Không có quyền thực hiện hành động này' });
       }
       next();
     }

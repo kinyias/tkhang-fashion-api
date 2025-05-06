@@ -21,7 +21,7 @@ router.post(
     body('vai_tro')
       .optional()
       .isIn(['khach_hang', 'admin'])
-      .withMessage('Invalid role'),
+      .withMessage('Vai trò không hợp lệ'),
   ],
   authController.register
 );

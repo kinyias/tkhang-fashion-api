@@ -1,18 +1,25 @@
+const ApiError = require('../lib/ApiError');
+
 // Error handling middleware
 function errorHandler(err, req, res, next) {
     console.error(err.stack);
-  
+    if (err instanceof ApiError) {
+      return res.status(err.statusCode).json({
+        message: err.message,
+        ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+      });
+    }
     // Custom error handling
     if (err.name === 'ValidationError') {
       return res.status(400).json({ message: err.message });
     }
   
     if (err.name === 'JsonWebTokenError') {
-      return res.status(401).json({ message: 'Invalid token' });
+      return res.status(401).json({ message: 'Token không hợp lệ' });
     }
   
     if (err.name === 'TokenExpiredError') {
-      return res.status(401).json({ message: 'Token expired' });
+      return res.status(401).json({ message: 'Token hết hạn' });
     }
   
     // Prisma errors

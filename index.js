@@ -9,6 +9,7 @@ const rateLimiter = require('./src/middlewares/rateLimiter');
 // Import routes
 const authRoutes = require('./src/routes/auth.route');
 const userRoutes = require('./src/routes/nguoidung.route');
+const danhMucRoutes = require('./src/routes/danhmuc.route');
 
 // Import passport config
 require('./src/config/passport');
@@ -29,6 +30,7 @@ app.use(rateLimiter);
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/danhmuc', danhMucRoutes);
 
 // Health check route
 app.get('/health', (req, res) => {

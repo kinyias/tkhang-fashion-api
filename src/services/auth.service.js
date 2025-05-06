@@ -1,8 +1,7 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma')
 const emailService = require('./email.service');
 
 // Hash password
@@ -88,7 +87,7 @@ async function register(userData) {
     email: user.email,
     ho: user.ho,
     ten: user.ten,
-    vai_tro: user.role,
+    vai_tro: user.vai_tro,
   };
 }
 
@@ -129,7 +128,7 @@ async function login(email, mat_khau) {
       email: user.email,
       ho: user.ho,
       ten: user.ten,
-      role: user.role,
+      vai_tro: user.vai_tro,
     },
     tokens: {
       accessToken,

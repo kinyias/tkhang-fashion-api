@@ -1,8 +1,7 @@
 const { validationResult } = require('express-validator');
 const authService = require('../services/auth.service');
 const passport = require('passport');
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma')
 // Register
 async function register(req, res, next) {
   try {
@@ -18,7 +17,7 @@ async function register(req, res, next) {
       ho: req.body.ho,
       ten: req.body.ten,
       so_dien_thoai: req.body.so_dien_thoai,
-      role: req.body.role || 'khach_hang',
+      vai_tro: req.body.vai_tro || 'khach_hang',
     };
 
     const user = await authService.register(userData);
@@ -43,7 +42,7 @@ async function login(req, res, next) {
 
     const { email, mat_khau } = req.body;
     const result = await authService.login(email, mat_khau);
-
+    
     return res.status(200).json({
       message: 'Đăng nhập thành công',
       ...result,
