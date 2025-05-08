@@ -85,8 +85,6 @@ model SanPham {
   thuongHieu  ThuongHieu  @relation(fields: [mathuonghieu], references: [ma])
 
   bienThes        BienThe[]
-  kichCos         KichCo[]
-  mauSacs         MauSac[]
   chiTietDonHangs ChiTietDonHang[]
   danhGias        DanhGia[]
 }
@@ -110,9 +108,8 @@ model BienThe {
 model KichCo {
   ma   Int    @id @default(autoincrement())
   ten  String
-  masp Int
 
-  sanPham  SanPham   @relation(fields: [masp], references: [ma])
+
   bienThes BienThe[]
 }
 
@@ -121,9 +118,6 @@ model MauSac {
   ma     Int    @id @default(autoincrement())
   ten    String
   ma_mau String
-  masp   Int
-
-  sanPham        SanPham         @relation(fields: [masp], references: [ma])
   bienThes       BienThe[]
   hinhAnhMauSacs HinhAnhMauSac[]
 }
