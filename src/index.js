@@ -3,16 +3,17 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const passport = require('passport');
-const { errorHandler } = require('./src/middlewares/errorMiddleware');
-const rateLimiter = require('./src/middlewares/rateLimiter');
+const { errorHandler } = require('./middlewares/errorMiddleware');
+const rateLimiter = require('./middlewares/rateLimiter');
 
 // Import routes
-const authRoutes = require('./src/routes/auth.route');
-const userRoutes = require('./src/routes/nguoidung.route');
-const danhMucRoutes = require('./src/routes/danhmuc.route');
-
+const authRoutes = require('./routes/auth.route');
+const userRoutes = require('./routes/nguoidung.route');
+const danhMucRoutes = require('./routes/danhmuc.route');
+const loaiSanPhamRoutes = require('./routes/loaisanpham.route');
+const thuongHieuRoutes = require('./routes/thuonghieu.route');
 // Import passport config
-require('./src/config/passport');
+require('./config/passport');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -31,7 +32,8 @@ app.use(rateLimiter);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/danhmuc', danhMucRoutes);
-
+app.use('/api/loaisanpham', loaiSanPhamRoutes);
+app.use('/api/thuonghieu', thuongHieuRoutes);
 // Health check route
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok', message: 'Server is running' });
