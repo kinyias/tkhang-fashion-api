@@ -2,7 +2,7 @@ const prisma = require('../lib/prisma');
 const ApiError = require('../lib/ApiError');
 
 // Get all categories with pagination
-async function getAllDanhMuc(page = 1, limit = 10, search = '') {
+async function getAllDanhMuc(page = 1, limit = 10, search = '', sortBy = 'ma', sortOrder = 'asc') {
   const skip = (page - 1) * limit;
   
   // Build filter conditions
@@ -14,15 +14,23 @@ async function getAllDanhMuc(page = 1, limit = 10, search = '') {
     };
   }
   
+  // Build sort options
+  const orderBy = {};
+  // Validate sortBy field to prevent injection
+  const validSortFields = ['ma', 'ten', 'mota'];
+  const validSortField = validSortFields.includes(sortBy) ? sortBy : 'ma';
+  
+  // Validate sortOrder
+  const validSortOrder = sortOrder === 'desc' ? 'desc' : 'asc';
+  orderBy[validSortField] = validSortOrder;
+  
   // Get categories with pagination
   const [danhMucs, totalCount] = await Promise.all([
     prisma.danhMuc.findMany({
       where,
       skip,
       take: Number(limit),
-      orderBy: {
-        ma: 'asc'
-      },
+      orderBy,
       include: {
         _count: {
           select: {
@@ -44,7 +52,7 @@ async function getAllDanhMuc(page = 1, limit = 10, search = '') {
       page: Number(page),
       limit: Number(limit),
       totalItems: totalCount,
-      totalPages
+      totalPages,
     }
   };
 }
@@ -165,10 +173,70 @@ async function deleteDanhMuc(id) {
   return { message: 'Xóa danh mục thành công' };
 }
 
+// Delete multiple categories
+async function deleteManyDanhMuc(ids) {
+  if (!Array.isArray(ids) || ids.length === 0) {
+    throw new ApiError(400, 'Danh sách ID không hợp lệ');
+  }
+  console.log('working');
+  // Convert all ids to numbers
+  const categoryIds = ids.map(id => Number(id));
+  
+  // Check if all categories exist and can be deleted
+  const categories = await prisma.danhMuc.findMany({
+    where: {
+      ma: {
+        in: categoryIds
+      }
+    },
+    include: {
+      _count: {
+        select: {
+          sanPhams: true,
+          loaiSanPhams: true
+        }
+      }
+    }
+  });
+  
+  // Check if all requested categories were found
+  if (categories.length !== categoryIds.length) {
+    throw new ApiError(404, 'Một hoặc nhiều danh mục không tồn tại');
+  }
+  
+  // Check if any category has related products or product types
+  const nonDeletableCategories = categories.filter(
+    cat => cat._count.sanPhams > 0 || cat._count.loaiSanPhams > 0
+  );
+  
+  if (nonDeletableCategories.length > 0) {
+    const categoryNames = nonDeletableCategories.map(cat => cat.ten).join(', ');
+    throw new ApiError(
+      400, 
+      `Không thể xóa các danh mục đang có sản phẩm hoặc loại sản phẩm liên kết: ${categoryNames}`
+    );
+  }
+  
+  // Delete all categories
+  await prisma.danhMuc.deleteMany({
+    where: {
+      ma: {
+        in: categoryIds
+      }
+    }
+  });
+  
+  return { 
+    message: `Đã xóa ${categoryIds.length} danh mục thành công`,
+    deletedCount: categoryIds.length
+  };
+}
+
 module.exports = {
   getAllDanhMuc,
   getDanhMucById,
   createDanhMuc,
   updateDanhMuc,
-  deleteDanhMuc
+  deleteDanhMuc,
+  deleteManyDanhMuc
 };

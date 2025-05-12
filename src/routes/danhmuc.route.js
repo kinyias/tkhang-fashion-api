@@ -49,6 +49,14 @@ router.put(
   danhMucController.updateDanhMuc
 );
 
+// Delete multiple categories (admin only)
+router.delete(
+  '/bulk',
+  authenticate,
+  authorize(['admin']),
+  danhMucController.deleteManyDanhMuc
+);
+
 // Delete category (admin only)
 router.delete(
   '/:id',
@@ -56,5 +64,6 @@ router.delete(
   authorize(['admin']),
   danhMucController.deleteDanhMuc
 );
+
 
 module.exports = router;
