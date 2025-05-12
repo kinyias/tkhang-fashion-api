@@ -178,7 +178,6 @@ async function deleteManyDanhMuc(ids) {
   if (!Array.isArray(ids) || ids.length === 0) {
     throw new ApiError(400, 'Danh sách ID không hợp lệ');
   }
-  console.log('working');
   // Convert all ids to numbers
   const categoryIds = ids.map(id => Number(id));
   

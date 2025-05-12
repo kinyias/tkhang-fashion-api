@@ -4,8 +4,22 @@ const kichCoService = require('../services/kichco.service');
 // Get all sizes with pagination
 async function getAllKichCo(req, res, next) {
   try {
-    const { page = 1, limit = 10, search = '' } = req.query;
-    const result = await kichCoService.getAllKichCo(page, limit, search);
+    const { 
+      page = 1, 
+      limit = 10, 
+      search = '',
+      sortBy = 'ma',
+      sortOrder = 'asc'
+    } = req.query;
+    
+    const result = await kichCoService.getAllKichCo(
+      page, 
+      limit, 
+      search,
+      sortBy,
+      sortOrder
+    );
+    
     return res.status(200).json(result);
   } catch (error) {
     next(error);
@@ -78,10 +92,29 @@ async function deleteKichCo(req, res, next) {
   }
 }
 
+// Delete multiple sizes
+async function deleteManyKichCo(req, res, next) {
+  try {
+    const { ids } = req.body;
+    
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ 
+        message: 'Vui lòng cung cấp danh sách ID hợp lệ' 
+      });
+    }
+    
+    const result = await kichCoService.deleteManyKichCo(ids);
+    return res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   getAllKichCo,
   getKichCoById,
   createKichCo,
   updateKichCo,
-  deleteKichCo
+  deleteKichCo,
+  deleteManyKichCo
 };

@@ -47,7 +47,13 @@ router.put(
   ],
   thuongHieuController.updateThuongHieu
 );
-
+// Delete brand (admin only)
+router.delete(
+  '/bulk',
+  authenticate,
+  authorize(['admin']),
+  thuongHieuController.deleteManyThuongHieu
+);
 // Delete brand (admin only)
 router.delete(
   '/:id',

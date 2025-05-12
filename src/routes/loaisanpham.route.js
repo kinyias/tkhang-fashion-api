@@ -73,6 +73,13 @@ router.put(
   loaiSanPhamController.updateLoaiSanPham
 );
 
+// Delete multiple product types (admin only)
+router.delete(
+  '/bulk',
+  authenticate,
+  authorize(['admin']),
+  loaiSanPhamController.deleteManyLoaiSanPham
+);
 // Delete product type (admin only)
 router.delete(
   '/:id',
@@ -80,5 +87,6 @@ router.delete(
   authorize(['admin']),
   loaiSanPhamController.deleteLoaiSanPham
 );
+
 
 module.exports = router;

@@ -4,8 +4,23 @@ const loaiSanPhamService = require('../services/loaisanpham.service');
 // Get all product types with pagination
 async function getAllLoaiSanPham(req, res, next) {
   try {
-    const { page = 1, limit = 10, search = '', madanhmuc } = req.query;
-    const result = await loaiSanPhamService.getAllLoaiSanPham(page, limit, search, madanhmuc);
+    const { 
+      page = 1, 
+      limit = 10, 
+      search = '', 
+      madanhmuc,
+      sortBy = 'ma',
+      sortOrder = 'asc'
+    } = req.query;
+    
+    const result = await loaiSanPhamService.getAllLoaiSanPham(
+      page, 
+      limit, 
+      search, 
+      madanhmuc,
+      sortBy,
+      sortOrder
+    );
     return res.status(200).json(result);
   } catch (error) {
     next(error);
@@ -90,10 +105,29 @@ async function deleteLoaiSanPham(req, res, next) {
   }
 }
 
+// Delete multiple product types
+async function deleteManyLoaiSanPham(req, res, next) {
+  try {
+    const { ids } = req.body;
+    
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ 
+        message: 'Vui lòng cung cấp danh sách ID hợp lệ' 
+      });
+    }
+    
+    const result = await loaiSanPhamService.deleteManyLoaiSanPham(ids);
+    return res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   getAllLoaiSanPham,
   getLoaiSanPhamById,
   createLoaiSanPham,
   updateLoaiSanPham,
-  deleteLoaiSanPham
+  deleteLoaiSanPham,
+  deleteManyLoaiSanPham
 };

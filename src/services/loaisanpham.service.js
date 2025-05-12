@@ -2,7 +2,7 @@ const prisma = require('../lib/prisma');
 const ApiError = require('../lib/ApiError');
 
 // Get all product types with pagination
-async function getAllLoaiSanPham(page = 1, limit = 10, search = '', madanhmuc = null) {
+async function getAllLoaiSanPham(page = 1, limit = 10, search = '', madanhmuc = null, sortBy = 'ma', sortOrder = 'asc') {
   const skip = (page - 1) * limit;
   
   // Build filter conditions
@@ -18,15 +18,23 @@ async function getAllLoaiSanPham(page = 1, limit = 10, search = '', madanhmuc = 
     where.madanhmuc = Number(madanhmuc);
   }
   
+  // Build sort options
+  const orderBy = {};
+  // Validate sortBy field to prevent injection
+  const validSortFields = ['ma', 'ten', 'mota', 'noibat'];
+  const validSortField = validSortFields.includes(sortBy) ? sortBy : 'ma';
+  
+  // Validate sortOrder
+  const validSortOrder = sortOrder === 'desc' ? 'desc' : 'asc';
+  orderBy[validSortField] = validSortOrder;
+  
   // Get product types with pagination
   const [loaiSanPhams, totalCount] = await Promise.all([
     prisma.loaiSanPham.findMany({
       where,
       skip,
       take: Number(limit),
-      orderBy: {
-        ma: 'asc'
-      },
+      orderBy,
       include: {
         danhMuc: {
           select: {
@@ -224,10 +232,65 @@ async function deleteLoaiSanPham(id) {
   return { message: 'Xóa loại sản phẩm thành công' };
 }
 
+// Delete multiple product types
+async function deleteManyLoaiSanPham(ids) {
+  if (!Array.isArray(ids) || ids.length === 0) {
+    throw new ApiError(400, 'Danh sách ID không hợp lệ');
+  }
+  
+  // Convert all ids to numbers
+  const loaiSanPhamIds = ids.map(id => Number(id));
+  
+  // Check if all product types exist
+  const loaiSanPham = await prisma.loaiSanPham.findMany({
+    where: {
+      ma: {
+        in: loaiSanPhamIds
+      }
+    },
+    include: {
+      _count: {
+        select: {
+          sanPhams: true
+        }
+      }
+    }
+  });
+  
+  // Check if we found all requested product types
+  if (loaiSanPham.length !== loaiSanPhamIds.length) {
+    const foundIds = loaiSanPham.map(pt => pt.ma);
+    const missingIds = loaiSanPhamIds.filter(id => !foundIds.includes(id));
+    throw new ApiError(404, `Không tìm thấy loại sản phẩm với ID: ${missingIds.join(', ')}`);
+  }
+  
+  // Check if any product type has related products
+  const withProducts = loaiSanPham.filter(pt => pt._count.sanPhams > 0);
+  if (withProducts.length > 0) {
+    const typeNames = withProducts.map(pt => pt.ten).join(', ');
+    throw new ApiError(400, `Không thể xóa loại sản phẩm đang có sản phẩm liên kết: ${typeNames}`);
+  }
+  
+  // Delete product types
+  await prisma.loaiSanPham.deleteMany({
+    where: {
+      ma: {
+        in: loaiSanPhamIds
+      }
+    }
+  });
+  
+  return { 
+    message: `Đã xóa ${loaiSanPhamIds.length} loại sản phẩm thành công`,
+    deletedIds: loaiSanPhamIds
+  };
+}
+
 module.exports = {
   getAllLoaiSanPham,
   getLoaiSanPhamById,
   createLoaiSanPham,
   updateLoaiSanPham,
-  deleteLoaiSanPham
+  deleteLoaiSanPham,
+  deleteManyLoaiSanPham
 };

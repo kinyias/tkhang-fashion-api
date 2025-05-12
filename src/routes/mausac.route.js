@@ -49,7 +49,13 @@ router.put(
   ],
   mauSacController.updateMauSac
 );
-
+// Delete color (admin only)
+router.delete(
+  '/bulk',
+  authenticate,
+  authorize(['admin']),
+  mauSacController.deleteManyMauSac
+);
 // Delete color (admin only)
 router.delete(
   '/:id',

@@ -40,7 +40,13 @@ router.put(
   ],
   kichCoController.updateKichCo
 );
-
+// Delete size (admin only)
+router.delete(
+  '/bulk',
+  authenticate,
+  authorize(['admin']),
+  kichCoController.deleteManyKichCo
+);
 // Delete size (admin only)
 router.delete(
   '/:id',
