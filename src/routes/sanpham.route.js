@@ -159,6 +159,13 @@ router.put(
   ],
   sanPhamController.updateSanPham
 );
+// Delete multiple products (admin only)
+router.delete(
+  '/bulk',
+  authenticate,
+  authorize(['admin']),
+  sanPhamController.deleteManySanPham
+);
 
 // Delete product (admin only)
 router.delete(
@@ -167,5 +174,6 @@ router.delete(
   authorize(['admin']),
   sanPhamController.deleteSanPham
 );
+
 
 module.exports = router;

@@ -93,10 +93,29 @@ async function deleteSanPham(req, res, next) {
   }
 }
 
+// Delete multiple products
+async function deleteManySanPham(req, res, next) {
+  try {
+    const { ids } = req.body;
+    
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ 
+        message: 'Vui lòng cung cấp danh sách ID hợp lệ' 
+      });
+    }
+    
+    const result = await sanPhamService.deleteManySanPham(ids);
+    return res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   getAllSanPham,
   getSanPhamById,
   createSanPham,
   updateSanPham,
-  deleteSanPham
+  deleteSanPham,
+  deleteManySanPham
 };

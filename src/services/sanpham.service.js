@@ -203,7 +203,6 @@ async function createSanPham(data) {
   if (existingSanPham) {
     throw new ApiError(409, 'Sản phẩm với tên này đã tồn tại');
   }
-  
   // Use transaction to create product, variants, and color images
   return await prisma.$transaction(async (prismaClient) => {
     // Create product
@@ -225,21 +224,16 @@ async function createSanPham(data) {
     // Process colors and their images
     if (mauSacs && mauSacs.length > 0) {
       for (const mauSacData of mauSacs) {
-        
         // Create color images
-        if (mauSacData.hinhAnhs && mauSacData.hinhAnhs.length > 0) {
-          await Promise.all(
-            mauSacData.hinhAnhs.map(hinhAnh => 
-              prismaClient.hinhAnhMauSac.create({
-                data: {
-                  hinhAnh: hinhAnh.url,
-                  anhChinh: hinhAnh.anhChinh || false,
-                  mamausac: mauSac.ma
-                }
-              })
-            )
-          );
-        }
+        await prismaClient.hinhAnhMauSac.create({
+          data: {
+            hinhAnh: mauSacData.hinhAnh,
+            anhChinh: mauSacData.anhChinh || false,
+            mamausac: mauSacData.mamausac,
+            masp: sanPham.ma
+          }
+        });
+
       }
     }
     
@@ -251,7 +245,7 @@ async function createSanPham(data) {
             data: {
               gia: typeof bienThe.gia === 'string' ? parseFloat(bienThe.gia) : bienThe.gia,
               soluong: Number(bienThe.soluong),
-              msp: sanPham.ma,
+              masp: sanPham.ma,
               mamausac: Number(bienThe.mamausac),
               makichco: Number(bienThe.makichco)
             }
@@ -263,32 +257,32 @@ async function createSanPham(data) {
     // Return created product with relationships
     return await prismaClient.sanPham.findUnique({
       where: { ma: sanPham.ma },
-      // include: {
-      //   danhMuc: {
-      //     select: {
-      //       ma: true,
-      //       ten: true
-      //     }
-      //   },
-      //   loaiSanPham: {
-      //     select: {
-      //       ma: true,
-      //       ten: true
-      //     }
-      //   },
-      //   thuongHieu: {
-      //     select: {
-      //       ma: true,
-      //       ten: true
-      //     }
-      //   },
-      //   bienThes: {
-      //     include: {
-      //       mauSac: true,
-      //       kichCo: true
-      //     }
-      //   }
-      // }
+      include: {
+        danhMuc: {
+          select: {
+            ma: true,
+            ten: true
+          }
+        },
+        loaiSanPham: {
+          select: {
+            ma: true,
+            ten: true
+          }
+        },
+        thuongHieu: {
+          select: {
+            ma: true,
+            ten: true
+          }
+        },
+        bienThes: {
+          include: {
+            mauSac: true,
+            kichCo: true
+          }
+        }
+      }
     });
   });
 }
@@ -390,7 +384,7 @@ async function updateSanPham(id, data) {
     if (bienThes && Array.isArray(bienThes) && bienThes.length > 0) {
       // Get existing variants
       const existingBienThes = await prismaClient.bienThe.findMany({
-        where: { msp: Number(id) }
+        where: { masp: Number(id) }
       });
       
       // Identify variants to update, create, or delete
@@ -410,10 +404,9 @@ async function updateSanPham(id, data) {
           }
         });
       }
-      
       // Process each variant
       for (const bienThe of bienThes) {
-        if (bienThe.ma) {
+        if (bienThe.ma !=0) {
           // Update existing variant
           await prismaClient.bienThe.update({
             where: { ma: Number(bienThe.ma) },
@@ -430,7 +423,7 @@ async function updateSanPham(id, data) {
             data: {
               gia: typeof bienThe.gia === 'string' ? parseFloat(bienThe.gia) : bienThe.gia,
               soluong: Number(bienThe.soluong),
-              msp: updatedSanPham.ma,
+              masp: updatedSanPham.ma,
               mamausac: Number(bienThe.mamausac),
               makichco: Number(bienThe.makichco)
             }
@@ -440,29 +433,48 @@ async function updateSanPham(id, data) {
     }
     
     // Update color images if provided
-    if (mauSacs && Array.isArray(mauSacs) && mauSacs.length > 0) {
-      for (const mauSacData of mauSacs) {
-        const mamausac = Number(mauSacData.ma);
-        
-        // Update color images
-        if (mauSacData.hinhAnhs && Array.isArray(mauSacData.hinhAnhs) && mauSacData.hinhAnhs.length > 0) {
-          // Delete existing images for this color
-          await prismaClient.hinhAnhMauSac.deleteMany({
-            where: { mamausac }
+    if (mauSacs && mauSacs.length > 0) {
+      const existingMauSacs = await prismaClient.hinhAnhMauSac.findMany({
+        where: { masp: Number(id) }
+      });
+      // Identify to update, create, or delete
+      const existingMauSacIds = existingMauSacs.map(bt => bt.ma);
+      const incomingMauSacIds = mauSacs.filter(bt => bt.ma).map(bt => Number(bt.ma));
+      
+      // To delete (exist in DB but not in incoming data)
+      const mauSacIdsToDelete = existingMauSacIds.filter(btId => !incomingMauSacIds.includes(btId));
+      // Delete variants that are no longer needed
+      if (mauSacIdsToDelete.length > 0) {
+        await prismaClient.hinhAnhMauSac.deleteMany({
+          where: {
+            ma: {
+              in: mauSacIdsToDelete
+            }
+          }
+        });
+      }
+      for (const mauSac of mauSacs) {
+        if (mauSac.ma !=0) {
+          // Update existing variant
+          await prismaClient.hinhAnhMauSac.update({
+            where: { ma: Number(mauSac.ma) },
+            data: {
+            hinhAnh: mauSac.hinhAnh,
+            anhChinh: mauSac.anhChinh || false,
+            mamausac: mauSac.mamausac,
+            masp: updatedSanPham.ma
+            }
           });
-          
-          // Create new images
-          await Promise.all(
-            mauSacData.hinhAnhs.map(hinhAnh => 
-              prismaClient.hinhAnhMauSac.create({
-                data: {
-                  hinhAnh: hinhAnh.url,
-                  anhChinh: hinhAnh.anhChinh || false,
-                  mamausac
-                }
-              })
-            )
-          );
+        } else {
+          // Create new variant
+          await prismaClient.hinhAnhMauSac.create({
+            data: {
+              hinhAnh: mauSac.hinhAnh,
+              anhChinh: mauSac.anhChinh || false,
+              mamausac: mauSac.mamausac,
+              masp: updatedSanPham.ma
+            }
+          });
         }
       }
     }
@@ -526,24 +538,6 @@ async function deleteSanPham(id) {
   
   // Use transaction to delete product and related entities
   return await prisma.$transaction(async (prismaClient) => {
-    // Get all variants
-    const bienThes = await prismaClient.bienThe.findMany({
-      where: { msp: Number(id) }
-    });
-    
-    // Delete all variants
-    if (bienThes.length > 0) {
-      await prismaClient.bienThe.deleteMany({
-        where: { msp: Number(id) }
-      });
-    }
-    
-    // Delete reviews if any
-    if (existingSanPham._count.danhGias > 0) {
-      await prismaClient.danhGia.deleteMany({
-        where: { masp: Number(id) }
-      });
-    }
     
     // Delete product
     await prismaClient.sanPham.delete({
@@ -554,10 +548,66 @@ async function deleteSanPham(id) {
   });
 }
 
+// Delete multiple products
+async function deleteManySanPham(ids) {
+  if (!Array.isArray(ids) || ids.length === 0) {
+    throw new ApiError(400, 'Danh sách ID không hợp lệ');
+  }
+  
+  // Convert all ids to numbers
+  const productIds = ids.map(id => Number(id));
+  
+  // Check if all products exist and can be deleted
+  const products = await prisma.sanPham.findMany({
+    where: {
+      ma: {
+        in: productIds
+      }
+    },
+    include: {
+      _count: {
+        select: {
+          chiTietDonHangs: true,
+          danhGias: true
+        }
+      }
+    }
+  });
+  
+  // Check if all requested products were found
+  if (products.length !== productIds.length) {
+    throw new ApiError(404, 'Một hoặc nhiều sản phẩm không tồn tại');
+  }
+  
+  // Check if any product has related orders
+  const withOrders = products.filter(p => p._count.chiTietDonHangs > 0);
+  if (withOrders.length > 0) {
+    const productNames = withOrders.map(p => p.ten).join(', ');
+    throw new ApiError(400, `Không thể xóa sản phẩm đang có đơn hàng liên kết: ${productNames}`);
+  }
+  
+  // Use transaction to delete products and related entities
+  return await prisma.$transaction(async (prismaClient) => {
+    // Delete the products
+    await prismaClient.sanPham.deleteMany({
+      where: {
+        ma: {
+          in: productIds
+        }
+      }
+    });
+    
+    return { 
+      message: `Đã xóa ${productIds.length} sản phẩm thành công`
+    };
+  });
+}
+
 module.exports = {
   getAllSanPham,
   getSanPhamById,
   createSanPham,
   updateSanPham,
-  deleteSanPham
+  deleteSanPham,
+  deleteManySanPham
 };

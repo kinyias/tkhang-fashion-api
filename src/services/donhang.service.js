@@ -265,7 +265,7 @@ async function createDonHang(data) {
       }
       
       // Check if variant belongs to the product
-      if (bienThe.msp !== sanPham.ma) {
+      if (bienThe.masp !== sanPham.ma) {
         throw new ApiError(400, `Biến thể không thuộc sản phẩm này`);
       }
       

@@ -85,6 +85,7 @@ model SanPham {
   thuongHieu  ThuongHieu  @relation(fields: [mathuonghieu], references: [ma])
 
   bienThes        BienThe[]
+   hinhAnhMauSacs HinhAnhMauSac[]
   chiTietDonHangs ChiTietDonHang[]
   danhGias        DanhGia[]
 }
@@ -94,14 +95,15 @@ model BienThe {
   ma       Int     @id @default(autoincrement())
   gia      Decimal
   soluong  Int
-  msp      Int
+  masp      Int
   mamausac Int
   makichco Int
 
-  sanPham         SanPham          @relation(fields: [msp], references: [ma])
+  sanPham         SanPham          @relation(fields: [masp], references: [ma], onDelete: Cascade)
   mauSac          MauSac           @relation(fields: [mamausac], references: [ma])
   kichCo          KichCo           @relation(fields: [makichco], references: [ma])
   chiTietDonHangs ChiTietDonHang[]
+  //  @@unique([masp, mamausac])
 }
 
 // KichCo
@@ -128,7 +130,9 @@ model HinhAnhMauSac {
   hinhAnh  String
   anhChinh Boolean
   mamausac Int
+  masp Int
 
+  sanPham SanPham @relation(fields: [masp], references: [ma], onDelete: Cascade)
   mauSac MauSac @relation(fields: [mamausac], references: [ma])
 }
 
@@ -166,7 +170,7 @@ model ChiTietDonHang {
   mabienthe Int
 
   sanPham SanPham @relation(fields: [masp], references: [ma])
-  donHang DonHang @relation(fields: [madh], references: [ma])
+  donHang DonHang @relation(fields: [madh], references: [ma],  onDelete: Cascade)
   bienThe BienThe @relation(fields: [mabienthe], references: [ma])
 }
 
@@ -190,7 +194,7 @@ model ThanhToan {
   trangthai     Boolean
   madh          Int
 
-  donHang DonHang @relation(fields: [madh], references: [ma])
+  donHang DonHang @relation(fields: [madh], references: [ma],  onDelete: Cascade)
 }
 
 // DanhGia
@@ -202,7 +206,7 @@ model DanhGia {
   masp        Int
 
   nguoiDung NguoiDung @relation(fields: [manguoidung], references: [ma])
-  sanPham   SanPham   @relation(fields: [masp], references: [ma])
+  sanPham   SanPham   @relation(fields: [masp], references: [ma], onDelete: Cascade)
 }
 
 // TinTuc
