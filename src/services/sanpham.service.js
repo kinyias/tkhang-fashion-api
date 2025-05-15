@@ -603,11 +603,123 @@ async function deleteManySanPham(ids) {
   });
 }
 
+// Get all products with variants, colors and sizes
+async function getAllSanPhamWithVariants(page = 1, limit = 10, search = '', filters = {}) {
+  const skip = (page - 1) * limit;
+  
+  // Build filter conditions
+  const where = {};
+  if (search) {
+    where.ten = {
+      contains: search,
+      mode: 'insensitive'
+    };
+  }
+  
+  // Apply additional filters
+  if (filters.madanhmuc) {
+    where.madanhmuc = Number(filters.madanhmuc);
+  }
+  
+  if (filters.maloaisanpham) {
+    where.maloaisanpham = Number(filters.maloaisanpham);
+  }
+  
+  if (filters.mathuonghieu) {
+    where.mathuonghieu = Number(filters.mathuonghieu);
+  }
+  
+  if (filters.noibat !== undefined) {
+    where.noibat = filters.noibat === 'true';
+  }
+  
+  if (filters.trangthai !== undefined) {
+    where.trangthai = filters.trangthai === 'true';
+  }
+  
+  // Get products with pagination and include variants, colors, sizes and ratings
+  const [sanPhams, totalCount] = await Promise.all([
+    prisma.sanPham.findMany({
+      where,
+      skip,
+      take: Number(limit),
+      orderBy: {
+        ma: 'desc'
+      },
+      include: {
+        danhMuc: {
+          select: {
+            ma: true,
+            ten: true
+          }
+        },
+        loaiSanPham: {
+          select: {
+            ma: true,
+            ten: true
+          }
+        },
+        thuongHieu: {
+          select: {
+            ma: true,
+            ten: true
+          }
+        },
+        bienThes: {
+          include: {
+            mauSac: true,
+            kichCo: true
+          }
+        },
+        hinhAnhMauSacs: {
+          where:{
+            anhChinh: true
+          }
+        },
+        danhGias: {
+          select: {
+            sosao: true
+          }
+        }
+      }
+    }),
+    prisma.sanPham.count({ where })
+  ]);
+
+  // Calculate average rating for each product
+  const sanPhamsWithRating = sanPhams.map(sanPham => {
+    const totalStars = sanPham.danhGias.reduce((sum, review) => sum + review.sosao, 0);
+    const averageRating = sanPham.danhGias.length > 0 
+      ? Math.min(5, Math.max(0, totalStars / sanPham.danhGias.length))
+      : 0;
+
+    // Remove the detailed reviews array and add the average
+    const { danhGias, ...sanPhamWithoutReviews } = sanPham;
+    return {
+      ...sanPhamWithoutReviews,
+      danhGia_trungbinh: Number(averageRating.toFixed(1))
+    };
+  });
+  
+  // Calculate pagination info
+  const totalPages = Math.ceil(totalCount / limit);
+  console.log(sanPhamsWithRating)
+  return {
+    data: sanPhamsWithRating,
+    pagination: {
+      page: Number(page),
+      limit: Number(limit),
+      totalItems: totalCount,
+      totalPages
+    }
+  };
+}
 module.exports = {
   getAllSanPham,
   getSanPhamById,
   createSanPham,
   updateSanPham,
   deleteSanPham,
-  deleteManySanPham
+  deleteManySanPham,
+  getAllSanPhamWithVariants
 };

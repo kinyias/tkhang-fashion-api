@@ -111,11 +111,41 @@ async function deleteManySanPham(req, res, next) {
   }
 }
 
+// Get all products with variants
+async function getAllSanPhamWithVariants(req, res, next) {
+  try {
+    const { 
+      page = 1, 
+      limit = 10, 
+      search = '', 
+      madanhmuc, 
+      maloaisanpham, 
+      mathuonghieu,
+      noibat,
+      trangthai
+    } = req.query;
+    
+    const filters = {
+      madanhmuc,
+      maloaisanpham,
+      mathuonghieu,
+      noibat,
+      trangthai
+    };
+    
+    const result = await sanPhamService.getAllSanPhamWithVariants(page, limit, search, filters);
+    return res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   getAllSanPham,
   getSanPhamById,
   createSanPham,
   updateSanPham,
   deleteSanPham,
-  deleteManySanPham
+  deleteManySanPham,
+  getAllSanPhamWithVariants
 };

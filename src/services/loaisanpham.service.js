@@ -2,7 +2,7 @@ const prisma = require('../lib/prisma');
 const ApiError = require('../lib/ApiError');
 
 // Get all product types with pagination
-async function getAllLoaiSanPham(page = 1, limit = 10, search = '', madanhmuc = null, sortBy = 'ma', sortOrder = 'asc') {
+async function getAllLoaiSanPham(page = 1, limit = 10, search = '', filters = {}, sortBy = 'ma', sortOrder = 'asc') {
   const skip = (page - 1) * limit;
   
   // Build filter conditions
@@ -14,8 +14,13 @@ async function getAllLoaiSanPham(page = 1, limit = 10, search = '', madanhmuc = 
     };
   }
   
-  if (madanhmuc) {
-    where.madanhmuc = Number(madanhmuc);
+  // Apply additional filters
+  if (filters.madanhmuc) {
+    where.madanhmuc = Number(filters.madanhmuc);
+  }
+  
+  if (filters.noibat !== undefined) {
+    where.noibat = filters.noibat === 'true';
   }
   
   // Build sort options

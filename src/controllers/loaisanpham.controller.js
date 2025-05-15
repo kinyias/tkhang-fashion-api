@@ -9,15 +9,21 @@ async function getAllLoaiSanPham(req, res, next) {
       limit = 10, 
       search = '', 
       madanhmuc,
+      noibat,
       sortBy = 'ma',
       sortOrder = 'asc'
     } = req.query;
+    
+    const filters = {
+      madanhmuc,
+      noibat
+    };
     
     const result = await loaiSanPhamService.getAllLoaiSanPham(
       page, 
       limit, 
       search, 
-      madanhmuc,
+      filters,
       sortBy,
       sortOrder
     );

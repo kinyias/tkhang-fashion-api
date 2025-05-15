@@ -8,6 +8,9 @@ const router = express.Router();
 // Get all products with pagination (public)
 router.get('/', sanPhamController.getAllSanPham);
 
+// Get all products with variants (public)
+router.get('/with-variants', sanPhamController.getAllSanPhamWithVariants);
+
 // Get product by ID (public)
 router.get('/:id', sanPhamController.getSanPhamById);
 
