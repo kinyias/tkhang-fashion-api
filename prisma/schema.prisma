@@ -140,6 +140,9 @@ model HinhAnhMauSac {
 model DonHang {
   ma              Int              @id @default(autoincrement())
   ngaydat         DateTime         @default(now())
+  ho              String
+  ten             String
+  email           String?
   giamgia         Decimal?
   tamtinh         Decimal
   diachi          String

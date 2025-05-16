@@ -703,7 +703,6 @@ async function getAllSanPhamWithVariants(page = 1, limit = 10, search = '', filt
   
   // Calculate pagination info
   const totalPages = Math.ceil(totalCount / limit);
-  console.log(sanPhamsWithRating)
   return {
     data: sanPhamsWithRating,
     pagination: {
