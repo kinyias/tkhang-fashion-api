@@ -71,8 +71,8 @@ model SanPham {
   ma            Int      @id @default(autoincrement())
   ten           String   @db.VarChar(255)
   mota          String?  @db.Text
-  giaban        Decimal
-  giagiam       Decimal?
+  giaban   Decimal @db.Decimal(30, 3)
+  giagiam  Decimal? @db.Decimal(30, 3)
   hinhanh       String?  @db.Text
   noibat        Boolean  @default(false)
   trangthai     Boolean  @default(true)
@@ -93,7 +93,7 @@ model SanPham {
 // BienThe
 model BienThe {
   ma       Int     @id @default(autoincrement())
-  gia      Decimal
+  gia       Decimal @db.Decimal(30, 3)
   soluong  Int
   masp      Int
   mamausac Int
@@ -143,8 +143,8 @@ model DonHang {
   ho              String
   ten             String
   email           String?
-  giamgia         Decimal?
-  tamtinh         Decimal
+  giamgia         Decimal? @db.Decimal(30, 3)
+  tamtinh         Decimal @db.Decimal(30, 3)
   diachi          String
   thanhpho        String
   quan            String
@@ -152,13 +152,15 @@ model DonHang {
   ngaygiao        DateTime?
   ngayhuy         DateTime?
   sdt             String
-  tonggia         Decimal
+  tonggia         Decimal @db.Decimal(30, 3)
   trangthai       TrangThaiDonHang
+  phuongthucgiaohang String
+  phigiaohang     Decimal @db.Decimal(30, 3)
   ghichu          String?
-  manguoidung     Int
+  manguoidung     Int?
   maKhuyenMai     Int?
   khuyenMai       KhuyenMai?       @relation(fields: [maKhuyenMai], references: [ma])
-  nguoiDung       NguoiDung        @relation(fields: [manguoidung], references: [ma])
+  nguoiDung       NguoiDung?        @relation(fields: [manguoidung], references: [ma])
   chiTietDonHangs ChiTietDonHang[]
   thanhToans      ThanhToan[]
 }
@@ -167,7 +169,7 @@ model DonHang {
 model ChiTietDonHang {
   ma        Int     @id @default(autoincrement())
   soluong   Int
-  dongia    Decimal
+  dongia    Decimal @db.Decimal(30, 3)
   masp      Int
   madh      Int
   mabienthe Int
@@ -227,6 +229,7 @@ model TinTuc {
 enum TrangThaiDonHang {
   da_dat
   dang_xu_ly
+  da_huy
   dang_giao_hang
   da_giao_hang
 }

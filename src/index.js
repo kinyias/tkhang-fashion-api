@@ -16,6 +16,7 @@ const mauSacRoutes = require('./routes/mausac.route');
 const kichCoRoutes = require('./routes/kichco.route');
 const sanPhamRoutes = require('./routes/sanpham.route');
 const khuyenMaiRoutes = require('./routes/khuyenmai.route');
+const donHangRoutes = require('./routes/donhang.route');
 // Import passport config
 require('./config/passport');
 
@@ -42,6 +43,7 @@ app.use('/api/sanpham', sanPhamRoutes);
 app.use('/api/mausac', mauSacRoutes);
 app.use('/api/kichco', kichCoRoutes);
 app.use('/api/khuyenmai', khuyenMaiRoutes);
+app.use('/api/donhang', donHangRoutes);
 // Health check route
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok', message: 'Server is running' });

@@ -195,44 +195,25 @@ async function getDonHangByUserId(userId, page = 1, limit = 10) {
 // Create new order with transaction
 async function createDonHang(data) {
   const { 
+    ho,
+    ten,
+    email,
     diachi, 
     thanhpho, 
     quan, 
     phuong, 
     sdt, 
     ghichu, 
+    tonggia,
+    tamtinh,
+    giamgia,
+    phuongthucgiaohang,
+    phigiaohang,
     manguoidung, 
     maKhuyenMai,
     chiTietDonHangs,
     thanhToan
   } = data;
-  
-  // Validate user exists
-  const user = await prisma.nguoiDung.findUnique({
-    where: { ma: Number(manguoidung) }
-  });
-  
-  if (!user) {
-    throw new ApiError(404, 'Không tìm thấy người dùng');
-  }
-  
-  // Validate coupon if provided
-  let khuyenMai = null;
-  if (maKhuyenMai) {
-    khuyenMai = await prisma.khuyenMai.findUnique({
-      where: { ma: Number(maKhuyenMai) }
-    });
-    
-    if (!khuyenMai) {
-      throw new ApiError(404, 'Không tìm thấy mã khuyến mãi');
-    }
-    
-    // Check if coupon is valid (not expired)
-    const now = new Date();
-    if (now < khuyenMai.ngaybatdat || now > khuyenMai.ngayketthuc) {
-      throw new ApiError(400, 'Mã khuyến mãi đã hết hạn hoặc chưa có hiệu lực');
-    }
-  }
   
   // Validate order items
   if (!chiTietDonHangs || !Array.isArray(chiTietDonHangs) || chiTietDonHangs.length === 0) {
@@ -241,67 +222,16 @@ async function createDonHang(data) {
   
   // Use transaction to ensure data consistency
   return await prisma.$transaction(async (prismaClient) => {
-    // Calculate order totals
-    let tamtinh = 0;
-    
-    // Validate and calculate price for each order item
-    for (const item of chiTietDonHangs) {
-      // Check if product exists
-      const sanPham = await prismaClient.sanPham.findUnique({
-        where: { ma: Number(item.masp) }
-      });
-      
-      if (!sanPham) {
-        throw new ApiError(404, `Không tìm thấy sản phẩm với mã ${item.masp}`);
-      }
-      
-      // Check if variant exists
-      const bienThe = await prismaClient.bienThe.findUnique({
-        where: { ma: Number(item.mabienthe) }
-      });
-      
-      if (!bienThe) {
-        throw new ApiError(404, `Không tìm thấy biến thể với mã ${item.mabienthe}`);
-      }
-      
-      // Check if variant belongs to the product
-      if (bienThe.masp !== sanPham.ma) {
-        throw new ApiError(400, `Biến thể không thuộc sản phẩm này`);
-      }
-      
-      // Check if enough stock
-      if (bienThe.soluong < item.soluong) {
-        throw new ApiError(400, `Sản phẩm ${sanPham.ten} không đủ số lượng trong kho`);
-      }
-      
-      // Calculate item total
-      tamtinh += Number(bienThe.gia) * item.soluong;
-    }
-    
-    // Calculate discount if coupon is applied
-    let giamgia = 0;
-    if (khuyenMai) {
-      // Check minimum order value
-      if (tamtinh < khuyenMai.giatridonhang) {
-        throw new ApiError(400, `Giá trị đơn hàng chưa đạt tối thiểu để áp dụng mã giảm giá`);
-      }
-      
-      // Calculate discount based on coupon type
-      if (khuyenMai.loaikhuyenmai === 'giam_gia_theo_phan_tram') {
-        giamgia = (tamtinh * khuyenMai.giatrigiam) / 100;
-      } else {
-        giamgia = khuyenMai.giatrigiam;
-      }
-    }
-    
-    // Calculate final price
-    const tonggia = tamtinh - giamgia;
+  
     
     // Create order
     const donHang = await prismaClient.donHang.create({
       data: {
         ngaydat: new Date(),
-        giamgia: giamgia > 0 ? giamgia : null,
+        ho,
+        ten,
+        email,
+        giamgia,
         tamtinh,
         tonggia,
         diachi,
@@ -309,25 +239,22 @@ async function createDonHang(data) {
         quan,
         phuong,
         sdt,
+        phuongthucgiaohang,
+        phigiaohang,
         trangthai: 'da_dat',
         ghichu,
         manguoidung: Number(manguoidung),
-        maKhuyenMai: khuyenMai ? Number(maKhuyenMai) : null
+        maKhuyenMai
       }
     });
     
     // Create order items and update inventory
     for (const item of chiTietDonHangs) {
-      // Get variant price
-      const bienThe = await prismaClient.bienThe.findUnique({
-        where: { ma: Number(item.mabienthe) }
-      });
-      
       // Create order item
       await prismaClient.chiTietDonHang.create({
         data: {
           soluong: Number(item.soluong),
-          dongia: bienThe.gia,
+          dongia: item.dongia,
           masp: Number(item.masp),
           madh: donHang.ma,
           mabienthe: Number(item.mabienthe)

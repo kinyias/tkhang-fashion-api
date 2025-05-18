@@ -45,14 +45,21 @@ router.get(
 // Create new order (authenticated users)
 router.post(
   '/',
-  authenticate,
   [
+    body('ho').notEmpty().withMessage('Họ không được để trống'),
+    body('ten').notEmpty().withMessage('Tên không được để trống'),
+    body('email').optional().isEmail().withMessage('Nhập email hợp lệ'),
     body('diachi').notEmpty().withMessage('Địa chỉ không được để trống'),
     body('thanhpho').notEmpty().withMessage('Thành phố không được để trống'),
     body('quan').notEmpty().withMessage('Quận không được để trống'),
     body('phuong').notEmpty().withMessage('Phường không được để trống'),
     body('sdt').notEmpty().withMessage('Số điện thoại không được để trống')
       .matches(/^[0-9]{10,11}$/).withMessage('Số điện thoại không hợp lệ'),
+    body('tonggia').isFloat({ min: 0 }).withMessage('Tổng tiền phải là số dương'),
+    body('tamtinh').isFloat({ min: 0 }).withMessage('Tạm tính phải là số dương'),
+    body('tamtinh').isFloat({ min: 0 }).withMessage('Tạm tính phải là số dương'),
+    body('phuongthucgiaohang').notEmpty().withMessage('Quận không được để trống'),
+    body('phigiaohang').isFloat({ min: 0 }).withMessage('Phí giao hàng phải là số dương'),
     body('chiTietDonHangs').isArray({ min: 1 }).withMessage('Đơn hàng phải có ít nhất một sản phẩm'),
     body('chiTietDonHangs.*.masp').isInt().withMessage('Mã sản phẩm phải là số nguyên'),
     body('chiTietDonHangs.*.mabienthe').isInt().withMessage('Mã biến thể phải là số nguyên'),
@@ -76,16 +83,16 @@ router.patch(
 );
 
 // Update payment status (admin only)
-router.patch(
-  '/thanhtoan/:id',
-  authenticate,
-  authorize(['admin']),
-  [
-    param('id').isInt().withMessage('ID thanh toán phải là số nguyên'),
-    body('trangthai').isBoolean().withMessage('Trạng thái thanh toán phải là boolean')
-  ],
-  donHangController.updateThanhToanStatus
-);
+// router.patch(
+//   '/thanhtoan/:id',
+//   authenticate,
+//   authorize(['admin']),
+//   [
+//     param('id').isInt().withMessage('ID thanh toán phải là số nguyên'),
+//     body('trangthai').isBoolean().withMessage('Trạng thái thanh toán phải là boolean')
+//   ],
+//   donHangController.updateThanhToanStatus
+// );
 
 // Cancel order (admin or order owner)
 router.post(
