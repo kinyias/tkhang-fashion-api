@@ -1,5 +1,6 @@
 const { validationResult } = require('express-validator');
 const donHangService = require('../services/donhang.service');
+const { handleMoMoReturn, handleMoMoIPN } = require('../services/momo.service');
 
 // Get all orders with pagination and filtering
 async function getAllDonHang(req, res, next) {
@@ -60,13 +61,24 @@ async function createDonHang(req, res, next) {
     const manguoidung = req.user ? req.user.ma : req.body.manguoidung;
     
     // Create order data
+    // Add payment URLs to order data
     const orderData = {
       ...req.body,
-      manguoidung
+      manguoidung,
+      returnUrl: `${process.env.API_BASE_URL}/api/donhang/payment/momo/return`, // Dynamic return URL
+      ipnUrl: `${process.env.API_BASE_URL}/api/donhang/payment/momo/ipn` // Dynamic IPN URL
     };
     
     const donHang = await donHangService.createDonHang(orderData);
-    
+    // If MoMo payment, return payment URL
+    if (req.body.paymentMethod === 'momo' && donHang.paymentUrl) {
+      return res.status(201).json({
+        message: 'Tạo đơn hàng thành công. Vui lòng thanh toán qua MoMo',
+        donHang,
+        paymentUrl: donHang.paymentUrl,
+        paymentMethod: 'momo'
+      });
+    }
     return res.status(201).json({
       message: 'Tạo đơn hàng thành công',
       donHang
@@ -75,7 +87,30 @@ async function createDonHang(req, res, next) {
     next(error);
   }
 }
+ // MoMo Return URL Handler
+ async function momoReturnHandler(req, res, next) {
+  try {
+    const result = await handleMoMoReturn(req.query);
+    
+    // Redirect to frontend with payment status
+    return res.redirect(`${process.env.CLIENT_BASE_URL}/thanh-toan/xac-nhan/${result.orderId}?payment_status=${result.success ? 'success' : 'failed'}`);
+  } catch (error) {
+    next(error);
+  }
+}
 
+// MoMo IPN Handler
+async function momoIPNHandler(req, res, next) {
+  try {
+    await handleMoMoIPN(req.body);
+    // MoMo expects a 200 status code for successful IPN processing
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('IPN Error:', error);
+    // Still return 200 to prevent MoMo from retrying
+    return res.status(200).json({ success: false });
+  }
+}
 // Update order status
 async function updateDonHangStatus(req, res, next) {
   try {
@@ -177,5 +212,7 @@ module.exports = {
   updateDonHangStatus,
   cancelDonHang,
   updateThanhToan,
-  createThanhToan
+  createThanhToan,
+  momoReturnHandler,
+  momoIPNHandler
 };

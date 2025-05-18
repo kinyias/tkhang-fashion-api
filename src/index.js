@@ -4,7 +4,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const passport = require('passport');
 const { errorHandler } = require('./middlewares/errorMiddleware');
-const rateLimiter = require('./middlewares/rateLimiter');
+// const rateLimiter = require('./middlewares/rateLimiter');
 
 // Import routes
 const authRoutes = require('./routes/auth.route');
@@ -31,7 +31,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(passport.initialize());
 
 // Apply rate limiting to all requests
-app.use(rateLimiter);
+// app.use(rateLimiter);
 
 // Routes
 app.use('/api/auth', authRoutes);

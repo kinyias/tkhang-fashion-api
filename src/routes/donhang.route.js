@@ -104,5 +104,7 @@ router.post(
   ],
   donHangController.cancelDonHang
 );
-
+// MoMo callback URLs
+router.get('/payment/momo/return', donHangController.momoReturnHandler);
+router.post('/payment/momo/ipn', express.json(), donHangController.momoIPNHandler);
 module.exports = router;

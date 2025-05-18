@@ -1,5 +1,6 @@
 const prisma = require('../lib/prisma');
 const ApiError = require('../lib/ApiError');
+const { createMoMoPayment } = require('./momo.service');
 
 // Get all orders with pagination and filtering
 async function getAllDonHang(page = 1, limit = 10, search = '', filters = {}) {
@@ -212,7 +213,9 @@ async function createDonHang(data) {
     manguoidung, 
     maKhuyenMai,
     chiTietDonHangs,
-    thanhToan
+    thanhToan,
+    returnUrl, 
+    ipnUrl 
   } = data;
   
   // Validate order items
@@ -274,14 +277,85 @@ async function createDonHang(data) {
     
     // Create payment record if provided
     if (thanhToan) {
-      await prismaClient.thanhToan.create({
-        data: {
-          phuongthuc: thanhToan.phuongthuc,
-          ngaythanhtoan: new Date(),
-          trangthai: thanhToan.trangthai || false,
-          madh: donHang.ma
+      if (thanhToan.phuongthuc === 'momo') {
+        try {
+          // Create MoMo payment
+          const orderInfo = `Thanh toán đơn hàng ${donHang.ma}`;
+          const momoResponse = await createMoMoPayment(
+            donHang.ma.toString(),
+            tonggia,
+            orderInfo,
+            returnUrl,
+            ipnUrl
+          )
+          // Create payment record with pending status
+          paymentResult = await prismaClient.thanhToan.create({
+            data: {
+              phuongthuc: 'momo',
+              ngaythanhtoan: new Date(),
+              trangthai: false, // false = pending
+              madh: donHang.ma,
+              // momoRequestId: momoResponse.requestId,
+              // momoOrderId: momoResponse.orderId,
+              // momoPayUrl: momoResponse.payUrl
+            }
+          });
+          
+          // Return order with payment URL
+          const result = await prismaClient.donHang.findUnique({
+            where: { ma: donHang.ma },
+            include: {
+              nguoiDung: {
+                select: {
+                  ma: true,
+                  ho: true,
+                  ten: true,
+                  email: true,
+                  so_dien_thoai: true
+                }
+              },
+              khuyenMai: true,
+              chiTietDonHangs: {
+                include: {
+                  sanPham: {
+                    select: {
+                      ma: true,
+                      ten: true,
+                      hinhanh: true
+                    }
+                  },
+                  bienThe: {
+                    include: {
+                      mauSac: true,
+                      kichCo: true
+                    }
+                  }
+                }
+              },
+              thanhToans: true
+            }
+          });
+          
+          return {
+            ...result,
+            paymentUrl: momoResponse.payUrl
+          };
+          
+        } catch (error) {
+          console.error('MoMo payment error:', error);
+          throw new ApiError(500, 'Lỗi khi tạo thanh toán MoMo');
         }
-      });
+      } else {
+        // Handle other payment methods (COD, etc.)
+          await prismaClient.thanhToan.create({
+            data: {
+              phuongthuc: thanhToan.phuongthuc,
+              ngaythanhtoan: new Date(),
+              trangthai: thanhToan.trangthai || false,
+              madh: donHang.ma
+            }
+          });
+      }
     }
     
     // Return created order with relationships
