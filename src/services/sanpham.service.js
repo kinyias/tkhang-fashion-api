@@ -137,7 +137,8 @@ async function getSanPhamById(id) {
     where: {
       mamausac: {
         in: uniqueMauSacIds
-      }
+      },
+      masp: sanPham.ma
     }
   });
   
