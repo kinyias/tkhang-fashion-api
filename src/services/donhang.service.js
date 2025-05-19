@@ -266,28 +266,30 @@ async function createDonHang(data) {
     });
     
     // Create order items and update inventory
-    for (const item of chiTietDonHangs) {
-      // Create order item
-      await prismaClient.chiTietDonHang.create({
-        data: {
+      await prismaClient.chiTietDonHang.createMany({
+        data: chiTietDonHangs.map(item => ({
           soluong: Number(item.soluong),
           dongia: item.dongia,
           masp: Number(item.masp),
           madh: donHang.ma,
           mabienthe: Number(item.mabienthe)
-        }
+        })),
       });
       
       // Update inventory (reduce stock)
-      await prismaClient.bienThe.update({
-        where: { ma: Number(item.mabienthe) },
-        data: {
-          soluong: {
-            decrement: Number(item.soluong)
-          }
-        }
-      });
-    }
+    //  await Promise.all(
+    //   chiTietDonHangs.map(item =>
+    //     prismaClient.bienThe.update({
+    //       where: { ma: Number(item.mabienthe) },
+    //       data: {
+    //         soluong: {
+    //           decrement: Number(item.soluong)
+    //         }
+    //       }
+    //     })
+    //   )
+    // );
+  
     
     // Create payment record if provided
     if (thanhToan) {
@@ -328,7 +330,6 @@ async function createDonHang(data) {
                   so_dien_thoai: true
                 }
               },
-              khuyenMai: true,
               chiTietDonHangs: {
                 include: {
                   sanPham: {
@@ -338,15 +339,8 @@ async function createDonHang(data) {
                       hinhanh: true
                     }
                   },
-                  bienThe: {
-                    include: {
-                      mauSac: true,
-                      kichCo: true
-                    }
-                  }
                 }
               },
-              thanhToans: true
             }
           });
           
@@ -385,7 +379,6 @@ async function createDonHang(data) {
             so_dien_thoai: true
           }
         },
-        khuyenMai: true,
         chiTietDonHangs: {
           include: {
             sanPham: {
@@ -395,15 +388,8 @@ async function createDonHang(data) {
                 hinhanh: true
               }
             },
-            bienThe: {
-              include: {
-                mauSac: true,
-                kichCo: true
-              }
-            }
           }
         },
-        thanhToans: true
       }
     });
   });
