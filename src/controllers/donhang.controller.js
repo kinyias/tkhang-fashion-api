@@ -13,6 +13,16 @@ async function getAllDonHang(req, res, next) {
   }
 }
 
+// Get order with orderItems by ID
+async function getDonHangWithChiTietById(req, res, next) {
+  try {
+    const { id } = req.params;
+    const donHang = await donHangService.getDonHangWithChiTietById(id);
+    return res.status(200).json(donHang);
+  } catch (error) {
+    next(error);
+  }
+}
 // Get order by ID
 async function getDonHangById(req, res, next) {
   try {
@@ -205,8 +215,9 @@ async function createThanhToan(req, res, next) {
 
 module.exports = {
   getAllDonHang,
-  getDonHangById,
+  getDonHangWithChiTietById,
   getDonHangByUserId,
+  getDonHangById,
   getMyDonHang,
   createDonHang,
   updateDonHangStatus,

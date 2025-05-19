@@ -98,8 +98,8 @@ async function getAllDonHang(page = 1, limit = 10, search = '', filters = {}) {
   };
 }
 
-// Get order by ID
-async function getDonHangById(id) {
+// Get order wiht order item by ID
+async function getDonHangWithChiTietById(id) {
   const donHang = await prisma.donHang.findUnique({
     where: { ma: Number(id) },
     include: {
@@ -140,7 +140,21 @@ async function getDonHangById(id) {
   
   return donHang;
 }
-
+// Get order by ID
+async function getDonHangById(id) {
+  const donHang = await prisma.donHang.findUnique({
+    where: { ma: Number(id) },
+    include: {
+      thanhToans: true
+    }
+  });
+  
+  if (!donHang) {
+    throw new ApiError(404, 'Không tìm thấy đơn hàng');
+  }
+  
+  return donHang;
+}
 // Get orders by user ID
 async function getDonHangByUserId(userId, page = 1, limit = 10) {
   const skip = (page - 1) * limit;
@@ -603,11 +617,12 @@ async function createThanhToan(data) {
 
 module.exports = {
   getAllDonHang,
-  getDonHangById,
+  getDonHangWithChiTietById,
   getDonHangByUserId,
   createDonHang,
   updateDonHangStatus,
   cancelDonHang,
   updateThanhToan,
-  createThanhToan
+  createThanhToan,
+  getDonHangById
 };

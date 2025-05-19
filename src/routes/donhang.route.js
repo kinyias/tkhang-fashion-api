@@ -20,10 +20,18 @@ router.get(
   donHangController.getAllDonHang
 );
 
-// Get order by ID (admin or order owner)
+// Get order by with chi tiet don hang ID (admin or order owner)
 router.get(
   '/:id',
   authenticate,
+  [
+    param('id').isInt().withMessage('ID đơn hàng phải là số nguyên')
+  ],
+  donHangController.getDonHangWithChiTietById
+);
+// Get order by ID 
+router.get(
+  '/:id/xac-nhan',
   [
     param('id').isInt().withMessage('ID đơn hàng phải là số nguyên')
   ],
