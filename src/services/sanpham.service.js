@@ -177,23 +177,23 @@ async function createSanPham(data) {
   } = data;
   
   // Validate required relationships
-  const [danhMuc, loaiSanPham, thuongHieu] = await Promise.all([
-    prisma.danhMuc.findUnique({ where: { ma: Number(madanhmuc) } }),
-    prisma.loaiSanPham.findUnique({ where: { ma: Number(maloaisanpham) } }),
-    prisma.thuongHieu.findUnique({ where: { ma: Number(mathuonghieu) } })
-  ]);
+  // const [danhMuc, loaiSanPham, thuongHieu] = await Promise.all([
+  //   prisma.danhMuc.findUnique({ where: { ma: Number(madanhmuc) } }),
+  //   prisma.loaiSanPham.findUnique({ where: { ma: Number(maloaisanpham) } }),
+  //   prisma.thuongHieu.findUnique({ where: { ma: Number(mathuonghieu) } })
+  // ]);
   
-  if (!danhMuc) {
-    throw new ApiError(404, 'Không tìm thấy danh mục');
-  }
+  // if (!danhMuc) {
+  //   throw new ApiError(404, 'Không tìm thấy danh mục');
+  // }
   
-  if (!loaiSanPham) {
-    throw new ApiError(404, 'Không tìm thấy loại sản phẩm');
-  }
+  // if (!loaiSanPham) {
+  //   throw new ApiError(404, 'Không tìm thấy loại sản phẩm');
+  // }
   
-  if (!thuongHieu) {
-    throw new ApiError(404, 'Không tìm thấy thương hiệu');
-  }
+  // if (!thuongHieu) {
+  //   throw new ApiError(404, 'Không tìm thấy thương hiệu');
+  // }
   
   // Check if product with the same name exists
   const existingSanPham = await prisma.sanPham.findFirst({
@@ -223,66 +223,34 @@ async function createSanPham(data) {
     
     // Process colors and their images
     if (mauSacs && mauSacs.length > 0) {
-      for (const mauSacData of mauSacs) {
-        // Create color images
-        await prismaClient.hinhAnhMauSac.create({
-          data: {
-            hinhAnh: mauSacData.hinhAnh,
-            anhChinh: mauSacData.anhChinh || false,
-            mamausac: mauSacData.mamausac,
-            masp: sanPham.ma
-          }
-        });
-
-      }
+      await prismaClient.hinhAnhMauSac.createMany({
+        data: mauSacs.map((item) => ({
+          hinhAnh: item.hinhAnh,
+          anhChinh: item.anhChinh || false,
+          mamausac: item.mamausac,
+          masp: sanPham.ma
+        })),
+        skipDuplicates: true,
+      });
     }
     
     // Create variants
     if (bienThes && bienThes.length > 0) {
-      await Promise.all(
-        bienThes.map(bienThe => 
-          prismaClient.bienThe.create({
-            data: {
-              gia: typeof bienThe.gia === 'string' ? parseFloat(bienThe.gia) : bienThe.gia,
-              soluong: Number(bienThe.soluong),
-              masp: sanPham.ma,
-              mamausac: Number(bienThe.mamausac),
-              makichco: Number(bienThe.makichco)
-            }
-          })
-        )
-      );
+      await prismaClient.bienThe.createMany({
+        data: bienThes.map((bienThe) => ({
+          gia: typeof bienThe.gia === 'string' ? parseFloat(bienThe.gia) : bienThe.gia,
+          soluong: Number(bienThe.soluong),
+          masp: sanPham.ma,
+          mamausac: Number(bienThe.mamausac),
+          makichco: Number(bienThe.makichco)
+        })),
+        skipDuplicates: true,
+      });
     }
     
     // Return created product with relationships
     return await prismaClient.sanPham.findUnique({
-      where: { ma: sanPham.ma },
-      include: {
-        danhMuc: {
-          select: {
-            ma: true,
-            ten: true
-          }
-        },
-        loaiSanPham: {
-          select: {
-            ma: true,
-            ten: true
-          }
-        },
-        thuongHieu: {
-          select: {
-            ma: true,
-            ten: true
-          }
-        },
-        bienThes: {
-          include: {
-            mauSac: true,
-            kichCo: true
-          }
-        }
-      }
+      where: { ma: sanPham.ma }
     });
   });
 }

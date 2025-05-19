@@ -1,5 +1,5 @@
 const nodemailer = require('nodemailer');
-
+const { formatCurrency } = require('../utils/currency');
 // Create transporter
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST,
@@ -51,8 +51,31 @@ async function sendPasswordResetEmail(email, token) {
 
   await transporter.sendMail(mailOptions);
 }
+async function sendNewOrderNotificationToAdmin(donhang) {
+  const mailOptions = {
+    from: process.env.EMAIL_FROM,
+    to: process.env.EMAIL_ADMIN,
+    subject: 'Đơn hàng mới vừa được đặt',
+    html: `
+      <h1>Đơn hàng mới</h1>
+      <p>Một khách hàng vừa đặt đơn hàng mới.</p>
+      <h2>Thông tin đơn hàng</h2>
+      <ul>
+        ${donhang.chiTietDonHangs.map(item => `
+          <li>${item.sanPham.ten} - ${item.soluong} x ${formatCurrency(item.dongia.toLocaleString())}</li>
+        `).join('')}
+      </ul>
+      <p><strong>Tổng tiền:</strong> ${formatCurrency(donhang.tonggia)}</p>
+      <p><strong>Mã đơn hàng:</strong> ${donhang.ma}</p>
+      <p><strong>Khách hàng:</strong> ${donhang.ten} (${donhang.email || ''})</p>
+      <p><strong>Thời gian đặt:</strong> ${new Date(donhang.ngaydat).toLocaleString()}</p>
+    `
+  };
 
+  await transporter.sendMail(mailOptions);
+}
 module.exports = {
   sendVerificationEmail,
+  sendNewOrderNotificationToAdmin,
   sendPasswordResetEmail
 };

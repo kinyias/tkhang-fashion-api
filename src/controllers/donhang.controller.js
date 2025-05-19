@@ -1,7 +1,7 @@
 const { validationResult } = require('express-validator');
 const donHangService = require('../services/donhang.service');
 const { handleMoMoReturn, handleMoMoIPN } = require('../services/momo.service');
-
+const emailService = require('../services/email.service');
 // Get all orders with pagination and filtering
 async function getAllDonHang(req, res, next) {
   try {
@@ -80,6 +80,7 @@ async function createDonHang(req, res, next) {
     };
     
     const donHang = await donHangService.createDonHang(orderData);
+     await emailService.sendNewOrderNotificationToAdmin(donHang);
     // If MoMo payment, return payment URL
     if (req.body.paymentMethod === 'momo' && donHang.paymentUrl) {
       return res.status(201).json({
