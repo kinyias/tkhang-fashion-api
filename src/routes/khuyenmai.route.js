@@ -26,7 +26,7 @@ router.post(
     body('loaikhuyenmai')
       .notEmpty()
       .withMessage('Loại khuyến mãi không được để trống')
-      .isIn(['giam_gia_theo_tien', 'giam_gia_theo_phan_tram'])
+      .isIn(['tien_mat', 'phan_tram'])
       .withMessage('Loại khuyến mãi không hợp lệ'),
     body('giatrigiam')
       .notEmpty()
@@ -64,7 +64,7 @@ router.put(
       .withMessage('Tên khuyến mãi phải là chuỗi'),
     body('loaikhuyenmai')
       .optional()
-      .isIn(['giam_gia_theo_tien', 'giam_gia_theo_phan_tram'])
+      .isIn(['tien_mat', 'phan_tram'])
       .withMessage('Loại khuyến mãi không hợp lệ'),
     body('giatrigiam')
       .optional()

@@ -4,9 +4,26 @@ const khuyenMaiService = require('../services/khuyenmai.service');
 // Get all promotions with pagination
 async function getAllKhuyenMai(req, res, next) {
   try {
-    const { page = 1, limit = 10, search = '', loaikhuyenmai, active } = req.query;
+    const { 
+      page = 1, 
+      limit = 10, 
+      search = '', 
+      loaikhuyenmai, 
+      active,
+      sortBy = 'ma',
+      sortOrder = 'desc'
+    } = req.query;
+    
     const filters = { loaikhuyenmai, active };
-    const result = await khuyenMaiService.getAllKhuyenMai(page, limit, search, filters);
+    const result = await khuyenMaiService.getAllKhuyenMai(
+      page, 
+      limit, 
+      search, 
+      filters, 
+      sortBy, 
+      sortOrder
+    );
+    
     return res.status(200).json(result);
   } catch (error) {
     next(error);

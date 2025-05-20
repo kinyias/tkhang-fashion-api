@@ -235,6 +235,6 @@ enum TrangThaiDonHang {
 }
 
 enum LoaiKhuyenMai {
-  giam_gia_theo_tien
-  giam_gia_theo_phan_tram
+  tien_mat
+  phan_tram
 }

@@ -2,7 +2,7 @@ const prisma = require('../lib/prisma');
 const ApiError = require('../lib/ApiError');
 
 // Get all promotions with pagination
-async function getAllKhuyenMai(page = 1, limit = 10, search = '', filters = {}) {
+async function getAllKhuyenMai(page = 1, limit = 10, search = '', filters = {}, sortBy = 'ma', sortOrder = 'desc') {
   const skip = (page - 1) * limit;
   
   // Build filter conditions
@@ -27,22 +27,23 @@ async function getAllKhuyenMai(page = 1, limit = 10, search = '', filters = {}) 
     ];
   }
   
+  // Validate sort field
+  const validSortFields = ['ma', 'ten', 'ngaybatdat', 'ngayketthuc', 'giatrigiam', 'giatridonhang'];
+  const orderBy = {};
+  
+  if (validSortFields.includes(sortBy)) {
+    orderBy[sortBy] = sortOrder.toLowerCase() === 'asc' ? 'asc' : 'desc';
+  } else {
+    orderBy.ma = 'desc'; // Default sorting
+  }
+  
   // Get promotions with pagination
   const [khuyenMais, totalCount] = await Promise.all([
     prisma.khuyenMai.findMany({
       where,
       skip,
       take: Number(limit),
-      orderBy: {
-        ma: 'desc'
-      },
-      include: {
-        _count: {
-          select: {
-            DonHang: true
-          }
-        }
-      }
+      orderBy,
     }),
     prisma.khuyenMai.count({ where })
   ]);
@@ -65,13 +66,6 @@ async function getAllKhuyenMai(page = 1, limit = 10, search = '', filters = {}) 
 async function getKhuyenMaiById(id) {
   const khuyenMai = await prisma.khuyenMai.findUnique({
     where: { ma: Number(id) },
-    include: {
-      _count: {
-        select: {
-          DonHang: true
-        }
-      }
-    }
   });
   
   if (!khuyenMai) {
@@ -103,11 +97,11 @@ async function createKhuyenMai(data) {
   }
   
   // Validate discount value based on promotion type
-  if (loaikhuyenmai === 'giam_gia_theo_phan_tram' && (giatrigiam <= 0 || giatrigiam > 100)) {
+  if (loaikhuyenmai === 'phan_tram' && (giatrigiam <= 0 || giatrigiam > 100)) {
     throw new ApiError(400, 'Giá trị giảm theo phần trăm phải từ 1 đến 100');
   }
   
-  if (loaikhuyenmai === 'giam_gia_theo_tien' && giatrigiam <= 0) {
+  if (loaikhuyenmai === 'tien_mat' && giatrigiam <= 0) {
     throw new ApiError(400, 'Giá trị giảm phải lớn hơn 0');
   }
   
@@ -133,13 +127,6 @@ async function updateKhuyenMai(id, data) {
   // Check if promotion exists
   const existingKhuyenMai = await prisma.khuyenMai.findUnique({
     where: { ma: Number(id) },
-    include: {
-      _count: {
-        select: {
-          DonHang: true
-        }
-      }
-    }
   });
   
   if (!existingKhuyenMai) {
@@ -180,11 +167,11 @@ async function updateKhuyenMai(id, data) {
   const promotionType = loaikhuyenmai || existingKhuyenMai.loaikhuyenmai;
   const discountValue = giatrigiam !== undefined ? giatrigiam : existingKhuyenMai.giatrigiam;
   
-  if (promotionType === 'giam_gia_theo_phan_tram' && (discountValue <= 0 || discountValue > 100)) {
+  if (promotionType === 'phan_tram' && (discountValue <= 0 || discountValue > 100)) {
     throw new ApiError(400, 'Giá trị giảm theo phần trăm phải từ 1 đến 100');
   }
   
-  if (promotionType === 'giam_gia_theo_tien' && discountValue <= 0) {
+  if (promotionType === 'tien_mat' && discountValue <= 0) {
     throw new ApiError(400, 'Giá trị giảm phải lớn hơn 0');
   }
   
@@ -209,13 +196,6 @@ async function deleteKhuyenMai(id) {
   // Check if promotion exists
   const existingKhuyenMai = await prisma.khuyenMai.findUnique({
     where: { ma: Number(id) },
-    include: {
-      _count: {
-        select: {
-          DonHang: true
-        }
-      }
-    }
   });
   
   if (!existingKhuyenMai) {
