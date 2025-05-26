@@ -12,7 +12,9 @@ async function getAllSanPham(req, res, next) {
       maloaisanpham, 
       mathuonghieu,
       noibat,
-      trangthai
+      trangthai,
+      sortBy = 'ma',
+      sortOrder = 'desc'
     } = req.query;
     
     const filters = {
@@ -23,7 +25,7 @@ async function getAllSanPham(req, res, next) {
       trangthai
     };
     
-    const result = await sanPhamService.getAllSanPham(page, limit, search, filters);
+    const result = await sanPhamService.getAllSanPham(page, limit, search, filters, sortBy, sortOrder);
     return res.status(200).json(result);
   } catch (error) {
     next(error);
@@ -122,7 +124,9 @@ async function getAllSanPhamWithVariants(req, res, next) {
       maloaisanpham, 
       mathuonghieu,
       noibat,
-      trangthai
+      trangthai,
+      sortBy = 'ma',
+      sortOrder = 'desc'
     } = req.query;
     
     const filters = {
@@ -133,7 +137,40 @@ async function getAllSanPhamWithVariants(req, res, next) {
       trangthai
     };
     
-    const result = await sanPhamService.getAllSanPhamWithVariants(page, limit, search, filters);
+    const result = await sanPhamService.getAllSanPhamWithVariants(page, limit, search, filters, sortBy, sortOrder);
+    return res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+}
+
+// Advanced product search with comprehensive filtering
+async function advancedSearchSanPham(req, res, next) {
+  try {
+    const { 
+      page = 1, 
+      limit = 10,
+      search = '',
+      sortBy = 'ma',
+      sortOrder = 'desc'
+    } = req.query;
+    
+    // Extract filter parameters
+    const filters = {
+      search,
+      // Convert comma-separated values to arrays for multi-select filters
+      madanhmuc: req.query.madanhmuc ? req.query.madanhmuc.split(',') : undefined,
+      maloaisanpham: req.query.maloaisanpham ? req.query.maloaisanpham.split(',') : undefined,
+      mathuonghieu: req.query.mathuonghieu ? req.query.mathuonghieu.split(',') : undefined,
+      mamausac: req.query.mamausac ? req.query.mamausac.split(',') : undefined,
+      makichco: req.query.makichco ? req.query.makichco.split(',') : undefined,
+      minPrice: req.query.minPrice,
+      maxPrice: req.query.maxPrice,
+      noibat: req.query.noibat,
+      trangthai: req.query.trangthai
+    };
+    
+    const result = await sanPhamService.advancedSearchSanPham(page, limit, filters, sortBy, sortOrder);
     return res.status(200).json(result);
   } catch (error) {
     next(error);
@@ -147,5 +184,6 @@ module.exports = {
   updateSanPham,
   deleteSanPham,
   deleteManySanPham,
-  getAllSanPhamWithVariants
+  getAllSanPhamWithVariants,
+  advancedSearchSanPham 
 };

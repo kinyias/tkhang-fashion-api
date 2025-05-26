@@ -178,5 +178,7 @@ router.delete(
   sanPhamController.deleteSanPham
 );
 
+// Advanced product search with comprehensive filtering (public)
+router.get('/advanced-search', sanPhamController.advancedSearchSanPham);
 
 module.exports = router;

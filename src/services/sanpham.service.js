@@ -2,7 +2,7 @@ const prisma = require('../lib/prisma');
 const ApiError = require('../lib/ApiError');
 
 // Get all products with pagination
-async function getAllSanPham(page = 1, limit = 10, search = '', filters = {}) {
+async function getAllSanPham(page = 1, limit = 10, search = '', filters = {}, sortBy = 'ma', sortOrder = 'desc') {
   const skip = (page - 1) * limit;
   
   // Build filter conditions
@@ -35,15 +35,23 @@ async function getAllSanPham(page = 1, limit = 10, search = '', filters = {}) {
     where.trangthai = filters.trangthai === 'true';
   }
   
+  // Build sort options
+  const orderBy = {};
+  // Validate sortBy field to prevent injection
+  const validSortFields = ['ma', 'ten', 'giaban', 'giangiam'];
+  const validSortField = validSortFields.includes(sortBy) ? sortBy : 'ma';
+  
+  // Validate sortOrder
+  const validSortOrder = sortOrder === 'asc' ? 'asc' : 'desc';
+  orderBy[validSortField] = validSortOrder;
+  
   // Get products with pagination
   const [sanPhams, totalCount] = await Promise.all([
     prisma.sanPham.findMany({
       where,
       skip,
       take: Number(limit),
-      orderBy: {
-        ma: 'desc'
-      },
+      orderBy,
       include: {
         danhMuc: {
           select: {
@@ -177,25 +185,6 @@ async function createSanPham(data) {
     mauSacs
   } = data;
   
-  // Validate required relationships
-  // const [danhMuc, loaiSanPham, thuongHieu] = await Promise.all([
-  //   prisma.danhMuc.findUnique({ where: { ma: Number(madanhmuc) } }),
-  //   prisma.loaiSanPham.findUnique({ where: { ma: Number(maloaisanpham) } }),
-  //   prisma.thuongHieu.findUnique({ where: { ma: Number(mathuonghieu) } })
-  // ]);
-  
-  // if (!danhMuc) {
-  //   throw new ApiError(404, 'Không tìm thấy danh mục');
-  // }
-  
-  // if (!loaiSanPham) {
-  //   throw new ApiError(404, 'Không tìm thấy loại sản phẩm');
-  // }
-  
-  // if (!thuongHieu) {
-  //   throw new ApiError(404, 'Không tìm thấy thương hiệu');
-  // }
-  
   // Check if product with the same name exists
   const existingSanPham = await prisma.sanPham.findFirst({
     where: { ten }
@@ -275,45 +264,11 @@ async function updateSanPham(id, data) {
   
   // Check if product exists
   const existingSanPham = await prisma.sanPham.findUnique({
-    where: { ma: Number(id) },
-    include: {
-      bienThes: true
-    }
+    where: { ma: Number(id) }
   });
   
   if (!existingSanPham) {
     throw new ApiError(404, 'Không tìm thấy sản phẩm');
-  }
-  
-  // Validate relationships if changing
-  if (madanhmuc) {
-    const danhMuc = await prisma.danhMuc.findUnique({
-      where: { ma: Number(madanhmuc) }
-    });
-    
-    if (!danhMuc) {
-      throw new ApiError(404, 'Không tìm thấy danh mục');
-    }
-  }
-  
-  if (maloaisanpham) {
-    const loaiSanPham = await prisma.loaiSanPham.findUnique({
-      where: { ma: Number(maloaisanpham) }
-    });
-    
-    if (!loaiSanPham) {
-      throw new ApiError(404, 'Không tìm thấy loại sản phẩm');
-    }
-  }
-  
-  if (mathuonghieu) {
-    const thuongHieu = await prisma.thuongHieu.findUnique({
-      where: { ma: Number(mathuonghieu) }
-    });
-    
-    if (!thuongHieu) {
-      throw new ApiError(404, 'Không tìm thấy thương hiệu');
-    }
   }
   
   // Check if another product with the same name exists
@@ -451,32 +406,6 @@ async function updateSanPham(id, data) {
     // Return updated product with relationships
     return await prismaClient.sanPham.findUnique({
       where: { ma: updatedSanPham.ma },
-      include: {
-        danhMuc: {
-          select: {
-            ma: true,
-            ten: true
-          }
-        },
-        loaiSanPham: {
-          select: {
-            ma: true,
-            ten: true
-          }
-        },
-        thuongHieu: {
-          select: {
-            ma: true,
-            ten: true
-          }
-        },
-        bienThes: {
-          include: {
-            mauSac: true,
-            kichCo: true
-          }
-        }
-      }
     });
   });
 }
@@ -573,7 +502,7 @@ async function deleteManySanPham(ids) {
 }
 
 // Get all products with variants, colors and sizes
-async function getAllSanPhamWithVariants(page = 1, limit = 10, search = '', filters = {}) {
+async function getAllSanPhamWithVariants(page = 1, limit = 10, search = '', filters = {}, sortBy = 'ma', sortOrder = 'desc') {
   const skip = (page - 1) * limit;
   
   // Build filter conditions
@@ -606,15 +535,23 @@ async function getAllSanPhamWithVariants(page = 1, limit = 10, search = '', filt
     where.trangthai = filters.trangthai === 'true';
   }
   
+  // Build sort options
+  const orderBy = {};
+  // Validate sortBy field to prevent injection
+  const validSortFields = ['ma', 'ten', 'giaban', 'giagiam'];
+  const validSortField = validSortFields.includes(sortBy) ? sortBy : 'ma';
+  
+  // Validate sortOrder
+  const validSortOrder = sortOrder === 'asc' ? 'asc' : 'desc';
+  orderBy[validSortField] = validSortOrder;
+  
   // Get products with pagination and include variants, colors, sizes and ratings
   const [sanPhams, totalCount] = await Promise.all([
     prisma.sanPham.findMany({
       where,
       skip,
       take: Number(limit),
-      orderBy: {
-        ma: 'desc'
-      },
+      orderBy,
       include: {
         danhMuc: {
           select: {
@@ -682,6 +619,193 @@ async function getAllSanPhamWithVariants(page = 1, limit = 10, search = '', filt
     }
   };
 }
+
+// Advanced product search with comprehensive filtering
+async function advancedSearchSanPham(page = 1, limit = 10, filters = {}, sortBy = 'ma', sortOrder = 'desc') {
+  const skip = (page - 1) * limit;
+  
+  // Build filter conditions
+  const where = {};
+  
+  // Text search
+  if (filters.search) {
+    where.ten = {
+      contains: filters.search,
+      mode: 'insensitive'
+    };
+  }
+  
+  // Category filters (multiple)
+  if (filters.madanhmuc && filters.madanhmuc.length > 0) {
+    const categoryIds = filters.madanhmuc.map(id => Number(id));
+    where.madanhmuc = {
+      in: categoryIds
+    };
+  }
+  
+  // Sub-category filters (multiple)
+  if (filters.maloaisanpham && filters.maloaisanpham.length > 0) {
+    const subCategoryIds = filters.maloaisanpham.map(id => Number(id));
+    where.maloaisanpham = {
+      in: subCategoryIds
+    };
+  }
+  
+  // Brand filters (multiple)
+  if (filters.mathuonghieu && filters.mathuonghieu.length > 0) {
+    const brandIds = filters.mathuonghieu.map(id => Number(id));
+    where.mathuonghieu = {
+      in: brandIds
+    };
+  }
+  
+  // Price range filter
+  if (filters.minPrice || filters.maxPrice) {
+    where.giaban = {};
+    
+    if (filters.minPrice) {
+      where.giaban.gte = parseFloat(filters.minPrice);
+    }
+    
+    if (filters.maxPrice) {
+      where.giaban.lte = parseFloat(filters.maxPrice);
+    }
+  }
+  
+  // Featured products filter
+  if (filters.noibat !== undefined) {
+    where.noibat = filters.noibat === 'true';
+  }
+  
+  // Status filter
+  if (filters.trangthai !== undefined) {
+    where.trangthai = filters.trangthai === 'true';
+  }
+  
+  // Color filter - requires joining with BienThe
+  let colorFilter = {};
+  if (filters.mamausac && filters.mamausac.length > 0) {
+    const colorIds = filters.mamausac.map(id => Number(id));
+    colorFilter = {
+      some: {
+        mamausac: {
+          in: colorIds
+        }
+      }
+    };
+  }
+  
+  // Size filter - requires joining with BienThe
+  let sizeFilter = {};
+  if (filters.makichco && filters.makichco.length > 0) {
+    const sizeIds = filters.makichco.map(id => Number(id));
+    sizeFilter = {
+      some: {
+        makichco: {
+          in: sizeIds
+        }
+      }
+    };
+  }
+  
+  // Apply color and size filters if they exist
+  if (Object.keys(colorFilter).length > 0 || Object.keys(sizeFilter).length > 0) {
+    where.bienThes = {};
+    
+    if (Object.keys(colorFilter).length > 0) {
+      where.bienThes = colorFilter;
+    }
+    
+    if (Object.keys(sizeFilter).length > 0) {
+      where.bienThes = { ...where.bienThes, ...sizeFilter };
+    }
+  }
+  
+  // Build sort options
+  const orderBy = {};
+  // Validate sortBy field to prevent injection
+  const validSortFields = ['ma', 'ten', 'giaban', 'giagiam'];
+  const validSortField = validSortFields.includes(sortBy) ? sortBy : 'ma';
+  
+  // Validate sortOrder
+  const validSortOrder = sortOrder === 'asc' ? 'asc' : 'desc';
+  orderBy[validSortField] = validSortOrder;
+  
+  // Get products with pagination and include variants, colors, sizes
+  const [sanPhams, totalCount] = await Promise.all([
+    prisma.sanPham.findMany({
+      where,
+      skip,
+      take: Number(limit),
+      orderBy,
+      include: {
+        danhMuc: {
+          select: {
+            ma: true,
+            ten: true
+          }
+        },
+        loaiSanPham: {
+          select: {
+            ma: true,
+            ten: true
+          }
+        },
+        thuongHieu: {
+          select: {
+            ma: true,
+            ten: true
+          }
+        },
+        bienThes: {
+          include: {
+            mauSac: true,
+            kichCo: true
+          }
+        },
+        hinhAnhMauSacs: {
+          where: {
+            anhChinh: true
+          }
+        },
+        danhGias: {
+          select: {
+            sosao: true
+          }
+        }
+      }
+    }),
+    prisma.sanPham.count({ where })
+  ]);
+
+  // Calculate average rating for each product
+  const sanPhamsWithRating = sanPhams.map(sanPham => {
+    const totalStars = sanPham.danhGias.reduce((sum, review) => sum + review.sosao, 0);
+    const averageRating = sanPham.danhGias.length > 0 
+      ? Math.min(5, Math.max(0, totalStars / sanPham.danhGias.length))
+      : 0;
+
+    // Remove the detailed reviews array and add the average
+    const { danhGias, ...sanPhamWithoutReviews } = sanPham;
+    return {
+      ...sanPhamWithoutReviews,
+      danhGia_trungbinh: Number(averageRating.toFixed(1))
+    };
+  });
+  
+  // Calculate pagination info
+  const totalPages = Math.ceil(totalCount / limit);
+  
+  return {
+    data: sanPhamsWithRating,
+    pagination: {
+      page: Number(page),
+      limit: Number(limit),
+      totalItems: totalCount,
+      totalPages
+    }
+  };
+}
 module.exports = {
   getAllSanPham,
   getSanPhamById,
@@ -689,5 +813,6 @@ module.exports = {
   updateSanPham,
   deleteSanPham,
   deleteManySanPham,
-  getAllSanPhamWithVariants
+  getAllSanPhamWithVariants,
+  advancedSearchSanPham 
 };

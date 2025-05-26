@@ -54,7 +54,6 @@ router.get(
 router.post(
   '/',
   [
-    body('ho').notEmpty().withMessage('Họ không được để trống'),
     body('ten').notEmpty().withMessage('Tên không được để trống'),
     body('email').optional().isEmail().withMessage('Nhập email hợp lệ'),
     body('diachi').notEmpty().withMessage('Địa chỉ không được để trống'),

@@ -140,7 +140,6 @@ model HinhAnhMauSac {
 model DonHang {
   ma              Int              @id @default(autoincrement())
   ngaydat         DateTime         @default(now())
-  ho              String
   ten             String
   email           String?
   giamgia         Decimal? @db.Decimal(30, 3)
@@ -162,7 +161,7 @@ model DonHang {
   khuyenMai       KhuyenMai?       @relation(fields: [maKhuyenMai], references: [ma])
   nguoiDung       NguoiDung?        @relation(fields: [manguoidung], references: [ma])
   chiTietDonHangs ChiTietDonHang[]
-  thanhToans      ThanhToan[]
+  thanhToans      ThanhToan?
 }
 
 // ChiTietDonHang
@@ -197,7 +196,7 @@ model ThanhToan {
   phuongthuc    String   @db.VarChar(100)
   ngaythanhtoan DateTime
   trangthai     Boolean
-  madh          Int
+  madh          Int @unique
 
   donHang DonHang @relation(fields: [madh], references: [ma],  onDelete: Cascade)
 }

@@ -76,7 +76,6 @@ async function getAllDonHang(page = 1, limit = 10, search = '', filters = {}) {
         _count: {
           select: {
             chiTietDonHangs: true,
-            thanhToans: true
           }
         }
       }
@@ -210,7 +209,6 @@ async function getDonHangByUserId(userId, page = 1, limit = 10) {
 // Create new order with transaction
 async function createDonHang(data) {
   const { 
-    ho,
     ten,
     email,
     diachi, 
@@ -245,7 +243,6 @@ async function createDonHang(data) {
     const donHang = await prismaClient.donHang.create({
       data: {
         ngaydat: new Date(),
-        ho,
         ten,
         email,
         giamgia,
@@ -496,7 +493,8 @@ async function cancelDonHang(id) {
     const updatedDonHang = await prismaClient.donHang.update({
       where: { ma: Number(id) },
       data: {
-        ngayhuy: new Date()
+        ngayhuy: new Date(),
+        trangthai: 'da_huy'
       }
     });
     
