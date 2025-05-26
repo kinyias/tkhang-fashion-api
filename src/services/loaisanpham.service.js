@@ -291,11 +291,33 @@ async function deleteManyLoaiSanPham(ids) {
   };
 }
 
+// Get product types by category ID
+async function getLoaiSanPhamByDanhMucId(danhMucId) {
+  // Build filter conditions
+  const where = {
+    madanhmuc: Number(danhMucId)
+  };
+  
+  // Get product types with pagination
+  const loaiSanPhams = await 
+    prisma.loaiSanPham.findMany({
+      where,
+      orderBy: {
+        ma: 'asc'
+      },
+    })
+
+  return {
+    data: loaiSanPhams,
+  };
+}
+
 module.exports = {
   getAllLoaiSanPham,
   getLoaiSanPhamById,
   createLoaiSanPham,
   updateLoaiSanPham,
   deleteLoaiSanPham,
-  deleteManyLoaiSanPham
+  deleteManyLoaiSanPham,
+  getLoaiSanPhamByDanhMucId 
 };

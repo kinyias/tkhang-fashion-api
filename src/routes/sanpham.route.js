@@ -10,7 +10,8 @@ router.get('/', sanPhamController.getAllSanPham);
 
 // Get all products with variants (public)
 router.get('/with-variants', sanPhamController.getAllSanPhamWithVariants);
-
+// Advanced product search with comprehensive filtering (public)
+router.get('/advanced-search', sanPhamController.advancedSearchSanPham);
 // Get product by ID (public)
 router.get('/:id', sanPhamController.getSanPhamById);
 
@@ -178,7 +179,5 @@ router.delete(
   sanPhamController.deleteSanPham
 );
 
-// Advanced product search with comprehensive filtering (public)
-router.get('/advanced-search', sanPhamController.advancedSearchSanPham);
 
 module.exports = router;

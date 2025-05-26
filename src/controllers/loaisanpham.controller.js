@@ -129,11 +129,26 @@ async function deleteManyLoaiSanPham(req, res, next) {
   }
 }
 
+// Get product types by category ID
+async function getLoaiSanPhamByDanhMucId(req, res, next) {
+  try {
+    const { danhMucId } = req.params;
+    
+    const result = await loaiSanPhamService.getLoaiSanPhamByDanhMucId(
+      danhMucId,
+    );
+    return res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   getAllLoaiSanPham,
   getLoaiSanPhamById,
   createLoaiSanPham,
   updateLoaiSanPham,
   deleteLoaiSanPham,
-  deleteManyLoaiSanPham
+  deleteManyLoaiSanPham,
+  getLoaiSanPhamByDanhMucId  
 };

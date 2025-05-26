@@ -8,8 +8,12 @@ const router = express.Router();
 // Get all product types with pagination (public)
 router.get('/', loaiSanPhamController.getAllLoaiSanPham);
 
+// Get product types by category ID (public)
+router.get('/by-danhmuc/:danhMucId', loaiSanPhamController.getLoaiSanPhamByDanhMucId);
+
 // Get product type by ID (public)
 router.get('/:id', loaiSanPhamController.getLoaiSanPhamById);
+
 
 // Create new product type (admin only)
 router.post(
