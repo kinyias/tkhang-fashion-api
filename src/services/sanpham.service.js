@@ -126,8 +126,12 @@ async function getSanPhamById(id) {
       },
       _count: {
         select: {
-          bienThes: true,
           danhGias: true
+        }
+      },
+      danhGias: {
+        select: {
+          sosao: true
         }
       }
     }
@@ -158,10 +162,14 @@ async function getSanPhamById(id) {
     }
     hinhAnhTheoMau[hinh.mamausac].push(hinh);
   });
-  
+    const totalStars = sanPham.danhGias.reduce((sum, review) => sum + review.sosao, 0);
+    const averageRating = sanPham.danhGias.length > 0 
+      ? Math.min(5, Math.max(0, totalStars / sanPham.danhGias.length))
+      : 0;
   // Add images to response
   const response = {
     ...sanPham,
+    danhGia_trungbinh: Number(averageRating.toFixed(1)),
     hinhAnhMauSacs: hinhAnhTheoMau
   };
   

@@ -206,6 +206,8 @@ model DanhGia {
   ma          Int    @id @default(autoincrement())
   sosao       Int
   binhluan    String
+  hinhAnh  String?
+  ngaydang    DateTime @default(now())
   manguoidung Int
   masp        Int
 
