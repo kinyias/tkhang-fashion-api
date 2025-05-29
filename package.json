@@ -11,6 +11,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "@elastic/elasticsearch": "^7.13.0",
     "@prisma/client": "^6.5.0",
     "axios": "^1.9.0",
     "bcrypt": "^5.1.1",

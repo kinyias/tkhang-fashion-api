@@ -1,6 +1,7 @@
-const { validationResult } = require('express-validator');
+const { validationResult, check } = require('express-validator');
 const sanPhamService = require('../services/sanpham.service');
-
+const ElasticsearchService = require('../services/elasticsearch.service');
+const client = require('../config/elasticsearch');
 // Get all products with pagination
 async function getAllSanPham(req, res, next) {
   try {
@@ -176,7 +177,69 @@ async function advancedSearchSanPham(req, res, next) {
     next(error);
   }
 }
+// Additional controller methods for Elasticsearch management
+async function syncProductToES(req, res, next) {
+  try {
+    const { productId } = req.params;
+    const success = await sanPhamService.syncProductToElasticsearch(Number(productId));
+    
+    if (success) {
+      return res.status(200).json({
+        message: 'Product synced to Elasticsearch successfully'
+      });
+    } else {
+      return res.status(404).json({
+        message: 'Product not found'
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+}
 
+async function syncAllProductsToES(req, res, next) {
+  try {
+    const success = await sanPhamService.syncAllProductsToElasticsearch();
+    
+    if (success) {
+      return res.status(200).json({
+        message: 'All products synced to Elasticsearch successfully'
+      });
+    } else {
+      return res.status(500).json({
+        message: 'Failed to sync products to Elasticsearch'
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function createIndexES(req, res, next) {
+  try {
+    await ElasticsearchService.createIndex();
+    return res.status(200).json({
+      message: 'Elasticsearch index created successfully'
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+// Health check for Elasticsearch
+async function checkElasticsearchHealth(req, res, next) {
+  try {
+    const health = await client.cluster.health();
+    return res.status(200).json({
+      status: 'healthy',
+      cluster: health.body
+    });
+  } catch (error) {
+    return res.status(503).json({
+      status: 'unhealthy',
+      error: error.message
+    });
+  }
+}
 module.exports = {
   getAllSanPham,
   getSanPhamById,
@@ -185,5 +248,9 @@ module.exports = {
   deleteSanPham,
   deleteManySanPham,
   getAllSanPhamWithVariants,
-  advancedSearchSanPham 
+  advancedSearchSanPham,
+  syncProductToES,
+  syncAllProductsToES,
+  createIndexES,
+  checkElasticsearchHealth
 };
