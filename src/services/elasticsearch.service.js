@@ -297,23 +297,23 @@ class ElasticsearchService {
         const searchTerm = filters.search.trim();
         
         // Strategy 1: Multi-match with boosting
-        query.bool.should.push({
-          multi_match: {
-            query: searchTerm,
-            fields: [
-              'ten^3',                    // Highest boost for product name
-              'ten.autocomplete^2',       // Autocomplete field
-              'mota^1.5',                // Description
-              'danhmuc_ten^2',           // Category name
-              'loaisanpham_ten^2',       // Product type
-              'thuonghieu_ten^1.5'       // Brand name
-            ],
-            type: 'best_fields',
-            fuzziness: 'AUTO',
-            operator: 'or',
-            boost: 3
-          }
-        });
+        // query.bool.should.push({
+        //   multi_match: {
+        //     query: searchTerm,
+        //     fields: [
+        //       'ten^3',                    // Highest boost for product name
+        //       'ten.autocomplete^2',       // Autocomplete field
+        //       'mota^1.5',                // Description
+        //       'danhmuc_ten^2',           // Category name
+        //       'loaisanpham_ten^2',       // Product type
+        //       'thuonghieu_ten^1.5'       // Brand name
+        //     ],
+        //     type: 'best_fields',
+        //     fuzziness: 'AUTO',
+        //     operator: 'or',
+        //     boost: 3
+        //   }
+        // });
 
         // Strategy 2: Phrase matching (exact phrases get higher score)
         query.bool.should.push({
@@ -326,14 +326,14 @@ class ElasticsearchService {
         });
 
         // Strategy 3: Prefix matching for autocomplete
-        query.bool.should.push({
-          multi_match: {
-            query: searchTerm,
-            fields: ['ten.autocomplete^1.5'],
-            type: 'phrase_prefix',
-            boost: 1.5
-          }
-        });
+        // query.bool.should.push({
+        //   multi_match: {
+        //     query: searchTerm,
+        //     fields: ['ten.autocomplete^1.5'],
+        //     type: 'phrase_prefix',
+        //     boost: 1.5
+        //   }
+        // });
 
         // Strategy 4: Wildcard search for partial matches
         if (searchTerm.length >= 2) {
@@ -434,7 +434,7 @@ class ElasticsearchService {
         'ten': 'ten.keyword',
         'giaban': 'giaban',
         'giagiam': 'giagiam',
-        'danhgia_trungbinh': 'danhgia_trungbinh',
+        'danhgia': 'danhgia_trungbinh',
         'created_at': 'created_at',
         'updated_at': 'updated_at'
       };
@@ -456,21 +456,21 @@ class ElasticsearchService {
       };
 
       // Add highlighting for search results
-      if (filters.search) {
-        searchBody.highlight = {
-          fields: {
-            'ten': {},
-            'mota': {},
-            'danhmuc_ten': {},
-            'loaisanpham_ten': {},
-            'thuonghieu_ten': {}
-          },
-          pre_tags: ['<mark>'],
-          post_tags: ['</mark>'],
-          fragment_size: 150,
-          number_of_fragments: 3
-        };
-      }
+      // if (filters.search) {
+      //   searchBody.highlight = {
+      //     fields: {
+      //       'ten': {},
+      //       'mota': {},
+      //       'danhmuc_ten': {},
+      //       'loaisanpham_ten': {},
+      //       'thuonghieu_ten': {}
+      //     },
+      //     pre_tags: ['<mark>'],
+      //     post_tags: ['</mark>'],
+      //     fragment_size: 150,
+      //     number_of_fragments: 3
+      //   };
+      // }
 
       const searchResponse = await elasticsearchClient.search({
         index: this.indexName,
@@ -506,36 +506,36 @@ class ElasticsearchService {
   }
 
   // Get search suggestions for autocomplete
-  async getSearchSuggestions(query, limit = 5) {
-    try {
-      await this.ensureIndexExists();
+  // async getSearchSuggestions(query, limit = 5) {
+  //   try {
+  //     await this.ensureIndexExists();
 
-      const searchResponse = await elasticsearchClient.search({
-        index: this.indexName,
-        body: {
-          query: {
-            multi_match: {
-              query: query,
-              fields: ['ten.autocomplete^2', 'danhmuc_ten', 'thuonghieu_ten'],
-              type: 'phrase_prefix'
-            }
-          },
-          _source: ['ten', 'danhmuc_ten', 'thuonghieu_ten'],
-          size: limit
-        }
-      });
+  //     const searchResponse = await elasticsearchClient.search({
+  //       index: this.indexName,
+  //       body: {
+  //         query: {
+  //           multi_match: {
+  //             query: query,
+  //             fields: ['ten.autocomplete^2', 'danhmuc_ten', 'thuonghieu_ten'],
+  //             type: 'phrase_prefix'
+  //           }
+  //         },
+  //         _source: ['ten', 'danhmuc_ten', 'thuonghieu_ten'],
+  //         size: limit
+  //       }
+  //     });
 
-      return searchResponse.body.hits.hits.map(hit => ({
-        text: hit._source.ten,
-        category: hit._source.danhmuc_ten,
-        brand: hit._source.thuonghieu_ten,
-        score: hit._score
-      }));
-    } catch (error) {
-      console.error('Error getting search suggestions:', error);
-      throw error;
-    }
-  }
+  //     return searchResponse.body.hits.hits.map(hit => ({
+  //       text: hit._source.ten,
+  //       category: hit._source.danhmuc_ten,
+  //       brand: hit._source.thuonghieu_ten,
+  //       score: hit._score
+  //     }));
+  //   } catch (error) {
+  //     console.error('Error getting search suggestions:', error);
+  //     throw error;
+  //   }
+  // }
 
   // Test analyzer (useful for debugging Vietnamese text processing)
 //   async testAnalyzer(text, analyzer = 'vietnamese_analyzer') {

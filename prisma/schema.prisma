@@ -227,6 +227,21 @@ model TinTuc {
   nguoiDung NguoiDung @relation(fields: [manguoidung], references: [ma])
 }
 
+model SinhVien {
+  ma          Int      @id @default(autoincrement())
+  ten      String
+  diem     String
+  makhoa Int
+
+  khoa Khoa @relation(fields: [makhoa], references: [ma])
+}
+
+model Khoa{
+  ma         Int      @id @default(autoincrement())
+  ten        String
+  sinhViens SinhVien[]
+}
+
 enum TrangThaiDonHang {
   da_dat
   dang_xu_ly

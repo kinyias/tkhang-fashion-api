@@ -557,7 +557,7 @@ async function deleteSanPham(id) {
   }
 
   // Use transaction to delete product and related entities
-  return await prisma.$transaction(async (prismaClient) => {
+  const result = await prisma.$transaction(async (prismaClient) => {
     // Delete product
     await prismaClient.sanPham.delete({
       where: { ma: Number(id) },
@@ -565,6 +565,16 @@ async function deleteSanPham(id) {
 
     return { message: 'Xóa sản phẩm thành công' };
   });
+
+  // Delete from Elasticsearch
+  try {
+    await elasticsearchService.deleteProduct(id);
+  } catch (error) {
+    console.error('Failed to delete product from Elasticsearch:', error);
+    // Don't throw error as the database deletion was successful
+  }
+
+  return result;
 }
 
 // Delete multiple products
@@ -587,7 +597,6 @@ async function deleteManySanPham(ids) {
       _count: {
         select: {
           chiTietDonHangs: true,
-          danhGias: true,
         },
       },
     },
@@ -609,7 +618,7 @@ async function deleteManySanPham(ids) {
   }
 
   // Use transaction to delete products and related entities
-  return await prisma.$transaction(async (prismaClient) => {
+  const result = await prisma.$transaction(async (prismaClient) => {
     // Delete the products
     await prismaClient.sanPham.deleteMany({
       where: {
@@ -623,6 +632,17 @@ async function deleteManySanPham(ids) {
       message: `Đã xóa ${productIds.length} sản phẩm thành công`,
     };
   });
+
+  // Delete from Elasticsearch
+  try {
+    await Promise.all(
+      productIds.map((id) => elasticsearchService.deleteProduct(id))
+    );
+  } catch (error) {
+    console.error('Failed to delete products from Elasticsearch:', error);
+  }
+
+  return result;
 }
 
 // Get all products with variants, colors and sizes
@@ -713,46 +733,64 @@ async function getAllSanPhamWithVariants(
             anhChinh: true,
           },
         },
-        danhGias: {
-          select: {
-            sosao: true,
-          },
-        },
       },
     }),
     prisma.sanPham.count({ where }),
   ]);
 
-  // Calculate average rating for each product
-  const sanPhamsWithRating = sanPhams.map((sanPham) => {
-    const totalStars = sanPham.danhGias.reduce(
-      (sum, review) => sum + review.sosao,
-      0
-    );
-    const averageRating =
-      sanPham.danhGias.length > 0
-        ? Math.min(5, Math.max(0, totalStars / sanPham.danhGias.length))
-        : 0;
-
-    // Remove the detailed reviews array and add the average
-    const { danhGias, ...sanPhamWithoutReviews } = sanPham;
-    return {
-      ...sanPhamWithoutReviews,
-      danhGia_trungbinh: Number(averageRating.toFixed(1)),
-    };
-  });
-
-  // Calculate pagination info
-  const totalPages = Math.ceil(totalCount / limit);
-  return {
-    data: sanPhamsWithRating,
-    pagination: {
-      page: Number(page),
-      limit: Number(limit),
-      totalItems: totalCount,
-      totalPages,
-    },
-  };
+   // Get average ratings for all products in one query
+   const productIds = sanPhams.map(sp => sp.ma);
+   const averageRatings = await prisma.danhGia.groupBy({
+     by: ['masp'],
+     where: {
+       masp: { in: productIds }
+     },
+     _avg: {
+       sosao: true
+     },
+     _count: {
+       sosao: true
+     }
+   });
+ 
+   // Create a map of productId to average rating
+   const ratingMap = new Map();
+   averageRatings.forEach(rating => {
+     const avg = rating._avg.sosao ? Number(rating._avg.sosao.toFixed(1)) : 0;
+     ratingMap.set(rating.masp, {
+       danhGia_trungbinh: Math.min(5, Math.max(0, avg)), // Ensure rating is between 0-5
+       _count:{
+        danhGias: rating._count.sosao
+       }
+     });
+   });
+ 
+   // Add ratings to products
+   const sanPhamsWithRating = sanPhams.map(sanPham => {
+     const ratingInfo = ratingMap.get(sanPham.ma) || {
+       danhGia_trungbinh: 0,
+       _count:{
+        danhGias: 0
+       }
+     };
+     
+     return {
+       ...sanPham,
+       ...ratingInfo
+     };
+   });
+   
+   // Calculate pagination info
+   const totalPages = Math.ceil(totalCount / limit);
+   return {
+     data: sanPhamsWithRating,
+     pagination: {
+       page: Number(page),
+       limit: Number(limit),
+       totalItems: totalCount,
+       totalPages
+     }
+   };
 }
 
 // Advanced product search with comprehensive filtering
