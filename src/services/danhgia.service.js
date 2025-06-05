@@ -75,6 +75,96 @@ async function getAllDanhGia(
   };
 }
 
+// Get all reviews for admin with filters
+async function getAdminDanhGia(
+  page = 1,
+  limit = 10,
+  search = '',
+  sortBy = 'ma',
+  sortOrder = 'asc',
+  rating = undefined
+) {
+  const skip = (page - 1) * limit;
+
+  // Build filter conditions
+  const where = {};
+
+  // Search in both product name and review comment
+  if (search) {
+    where.OR = [
+      {
+        binhluan: {
+          contains: search,
+          mode: 'insensitive',
+        },
+      },
+      {
+        sanPham: {
+          ten: {
+            contains: search,
+            mode: 'insensitive',
+          },
+        },
+      },
+    ];
+  }
+
+  // Filter by rating if provided
+  if (rating !== undefined) {
+    where.sosao = rating;
+  }
+
+  // Build sort options
+  const orderBy = {};
+  // Validate sortBy field to prevent injection
+  const validSortFields = ['ma', 'sosao', 'ngaydang'];
+  const validSortField = validSortFields.includes(sortBy) ? sortBy : 'ma';
+
+  // Validate sortOrder
+  const validSortOrder = sortOrder === 'desc' ? 'desc' : 'asc';
+  orderBy[validSortField] = validSortOrder;
+
+  // Get reviews with pagination
+  const [danhGias, totalCount] = await Promise.all([
+    prisma.danhGia.findMany({
+      where,
+      skip,
+      take: Number(limit),
+      orderBy,
+      include: {
+        nguoiDung: {
+          select: {
+            ma: true,
+            ho: true,
+            ten: true,
+            email: true,
+          },
+        },
+        sanPham: {
+          select: {
+            ma: true,
+            ten: true,
+          },
+        },
+      },
+    }),
+    prisma.danhGia.count({ where }),
+  ]);
+
+  // Calculate pagination info
+  const totalPages = Math.ceil(totalCount / limit);
+
+  return {
+    data: danhGias,
+    pagination: {
+      page: Number(page),
+      limit: Number(limit),
+      totalItems: totalCount,
+      totalPages,
+    },
+  };
+}
+
 // Get review by ID
 async function getDanhGiaById(id) {
   const danhGia = await prisma.danhGia.findUnique({
@@ -265,6 +355,7 @@ async function deleteManyDanhGia(ids) {
 
 module.exports = {
   getAllDanhGia,
+  getAdminDanhGia,
   getDanhGiaById,
   createDanhGia,
   updateDanhGia,

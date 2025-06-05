@@ -28,6 +28,33 @@ async function getAllDanhGia(req, res, next) {
   }
 }
 
+// Get all reviews for admin with filters
+async function getAdminDanhGia(req, res, next) {
+  try {
+    const {
+      page = 1,
+      limit = 10,
+      search = '',
+      sortBy = 'ma',
+      sortOrder = 'asc',
+      rating,
+    } = req.query;
+
+    const result = await danhGiaService.getAdminDanhGia(
+      page,
+      limit,
+      search,
+      sortBy,
+      sortOrder,
+      rating ? Number(rating) : undefined
+    );
+
+    return res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+}
+
 // Get review by ID
 async function getDanhGiaById(req, res, next) {
   try {
@@ -132,6 +159,7 @@ async function deleteManyDanhGia(req, res, next) {
 
 module.exports = {
   getAllDanhGia,
+  getAdminDanhGia,
   getDanhGiaById,
   createDanhGia,
   updateDanhGia,

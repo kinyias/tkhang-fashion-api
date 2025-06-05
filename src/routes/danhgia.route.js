@@ -8,6 +8,14 @@ const router = express.Router();
 // Get all reviews with pagination (public)
 router.get('/', danhGiaController.getAllDanhGia);
 
+// Get all reviews for admin with filters (admin only)
+router.get(
+  '/admin',
+  authenticate,
+  authorize(['admin']),
+  danhGiaController.getAdminDanhGia
+);
+
 // Get review by ID (public)
 router.get('/:id', danhGiaController.getDanhGiaById);
 
