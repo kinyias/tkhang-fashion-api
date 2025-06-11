@@ -19,7 +19,8 @@ const khuyenMaiRoutes = require('./routes/khuyenmai.route');
 const donHangRoutes = require('./routes/donhang.route');
 const danhGiaRoutes = require('./routes/danhgia.route');
 const tintucRoutes = require('./routes/tintuc.route');
-const loaitinRoutes = require('./routes/loaitin.route')
+const loaitinRoutes = require('./routes/loaitin.route');
+const reportRoutes = require('./routes/report.route');
 // Import passport config
 require('./config/passport');
 
@@ -50,6 +51,7 @@ app.use('/api/donhang', donHangRoutes);
 app.use('/api/danhgia', danhGiaRoutes);
 app.use('/api/loaitin', loaitinRoutes);
 app.use('/api/tintuc', tintucRoutes);
+app.use('/api/report', reportRoutes);
 // Health check route
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok', message: 'Server is running' });
