@@ -5,36 +5,36 @@ const { createMoMoPayment } = require('./momo.service');
 // Get all orders with pagination and filtering
 async function getAllDonHang(page = 1, limit = 10, search = '', filters = {}) {
   const skip = (page - 1) * limit;
-  
+
   // Build filter conditions
   const where = {};
-  
+
   // Filter by order status
   if (filters.trangthai) {
     where.trangthai = filters.trangthai;
   }
-  
+
   // Filter by user ID
   if (filters.manguoidung) {
     where.manguoidung = Number(filters.manguoidung);
   }
-  
+
   // Filter by date range
   if (filters.startDate && filters.endDate) {
     where.ngaydat = {
       gte: new Date(filters.startDate),
-      lte: new Date(filters.endDate)
+      lte: new Date(filters.endDate),
     };
   }
-  
+
   // Search by phone number
   if (search) {
     where.sdt = {
       contains: search,
-      mode: 'insensitive'
+      mode: 'insensitive',
     };
   }
-  
+
   // Get orders with pagination
   const [donHangs, totalCount] = await Promise.all([
     prisma.donHang.findMany({
@@ -42,7 +42,7 @@ async function getAllDonHang(page = 1, limit = 10, search = '', filters = {}) {
       skip,
       take: Number(limit),
       orderBy: {
-        ngaydat: 'desc'
+        ngaydat: 'desc',
       },
       include: {
         nguoiDung: {
@@ -51,8 +51,8 @@ async function getAllDonHang(page = 1, limit = 10, search = '', filters = {}) {
             ho: true,
             ten: true,
             email: true,
-            so_dien_thoai: true
-          }
+            so_dien_thoai: true,
+          },
         },
         khuyenMai: true,
         chiTietDonHangs: {
@@ -61,39 +61,39 @@ async function getAllDonHang(page = 1, limit = 10, search = '', filters = {}) {
               select: {
                 ma: true,
                 ten: true,
-                hinhanh: true
-              }
+                hinhanh: true,
+              },
             },
             bienThe: {
               include: {
                 mauSac: true,
-                kichCo: true
-              }
-            }
-          }
+                kichCo: true,
+              },
+            },
+          },
         },
         thanhToans: true,
         _count: {
           select: {
             chiTietDonHangs: true,
-          }
-        }
-      }
+          },
+        },
+      },
     }),
-    prisma.donHang.count({ where })
+    prisma.donHang.count({ where }),
   ]);
-  
+
   // Calculate pagination info
   const totalPages = Math.ceil(totalCount / limit);
-  
+
   return {
     data: donHangs,
     pagination: {
       page: Number(page),
       limit: Number(limit),
       totalItems: totalCount,
-      totalPages
-    }
+      totalPages,
+    },
   };
 }
 
@@ -108,8 +108,8 @@ async function getDonHangWithChiTietById(id) {
           ho: true,
           ten: true,
           email: true,
-          so_dien_thoai: true
-        }
+          so_dien_thoai: true,
+        },
       },
       khuyenMai: true,
       chiTietDonHangs: {
@@ -118,25 +118,25 @@ async function getDonHangWithChiTietById(id) {
             select: {
               ma: true,
               ten: true,
-              hinhanh: true
-            }
+              hinhanh: true,
+            },
           },
           bienThe: {
             include: {
               mauSac: true,
-              kichCo: true
-            }
-          }
-        }
+              kichCo: true,
+            },
+          },
+        },
       },
-      thanhToans: true
-    }
+      thanhToans: true,
+    },
   });
-  
+
   if (!donHang) {
     throw new ApiError(404, 'Không tìm thấy đơn hàng');
   }
-  
+
   return donHang;
 }
 // Get order by ID
@@ -144,20 +144,20 @@ async function getDonHangById(id) {
   const donHang = await prisma.donHang.findUnique({
     where: { ma: Number(id) },
     include: {
-      thanhToans: true
-    }
+      thanhToans: true,
+    },
   });
-  
+
   if (!donHang) {
     throw new ApiError(404, 'Không tìm thấy đơn hàng');
   }
-  
+
   return donHang;
 }
 // Get orders by user ID
 async function getDonHangByUserId(userId, page = 1, limit = 10) {
   const skip = (page - 1) * limit;
-  
+
   // Get orders with pagination
   const [donHangs, totalCount] = await Promise.all([
     prisma.donHang.findMany({
@@ -165,7 +165,7 @@ async function getDonHangByUserId(userId, page = 1, limit = 10) {
       skip,
       take: Number(limit),
       orderBy: {
-        ngaydat: 'desc'
+        ngaydat: 'desc',
       },
       include: {
         khuyenMai: true,
@@ -175,70 +175,72 @@ async function getDonHangByUserId(userId, page = 1, limit = 10) {
               select: {
                 ma: true,
                 ten: true,
-                hinhanh: true
-              }
+                hinhanh: true,
+              },
             },
             bienThe: {
               include: {
                 mauSac: true,
-                kichCo: true
-              }
-            }
-          }
+                kichCo: true,
+              },
+            },
+          },
         },
-        thanhToans: true
-      }
+        thanhToans: true,
+      },
     }),
-    prisma.donHang.count({ where: { manguoidung: Number(userId) } })
+    prisma.donHang.count({ where: { manguoidung: Number(userId) } }),
   ]);
-  
+
   // Calculate pagination info
   const totalPages = Math.ceil(totalCount / limit);
-  
+
   return {
     data: donHangs,
     pagination: {
       page: Number(page),
       limit: Number(limit),
       totalItems: totalCount,
-      totalPages
-    }
+      totalPages,
+    },
   };
 }
 
 // Create new order with transaction
 async function createDonHang(data) {
-  const { 
+  const {
     ten,
     email,
-    diachi, 
-    thanhpho, 
-    quan, 
-    phuong, 
-    sdt, 
-    ghichu, 
+    diachi,
+    thanhpho,
+    quan,
+    phuong,
+    sdt,
+    ghichu,
     tonggia,
     tamtinh,
     giamgia,
     phuongthucgiaohang,
     phigiaohang,
-    manguoidung, 
+    manguoidung,
     maKhuyenMai,
     chiTietDonHangs,
     thanhToan,
-    returnUrl, 
-    ipnUrl 
+    returnUrl,
+    ipnUrl,
   } = data;
-  
+
   // Validate order items
-  if (!chiTietDonHangs || !Array.isArray(chiTietDonHangs) || chiTietDonHangs.length === 0) {
+  if (
+    !chiTietDonHangs ||
+    !Array.isArray(chiTietDonHangs) ||
+    chiTietDonHangs.length === 0
+  ) {
     throw new ApiError(400, 'Đơn hàng phải có ít nhất một sản phẩm');
   }
-  
+
   // Use transaction to ensure data consistency
   return await prisma.$transaction(async (prismaClient) => {
-  
-    
     // Create order
     const donHang = await prismaClient.donHang.create({
       data: {
@@ -258,22 +260,22 @@ async function createDonHang(data) {
         trangthai: 'da_dat',
         ghichu,
         manguoidung: Number(manguoidung),
-        maKhuyenMai
-      }
+        maKhuyenMai,
+      },
     });
-    
+
     // Create order items and update inventory
-      await prismaClient.chiTietDonHang.createMany({
-        data: chiTietDonHangs.map(item => ({
-          soluong: Number(item.soluong),
-          dongia: item.dongia,
-          masp: Number(item.masp),
-          madh: donHang.ma,
-          mabienthe: Number(item.mabienthe)
-        })),
-      });
-      
-      // Update inventory (reduce stock)
+    await prismaClient.chiTietDonHang.createMany({
+      data: chiTietDonHangs.map((item) => ({
+        soluong: Number(item.soluong),
+        dongia: item.dongia,
+        masp: Number(item.masp),
+        madh: donHang.ma,
+        mabienthe: Number(item.mabienthe),
+      })),
+    });
+
+    // Update inventory (reduce stock)
     //  await Promise.all(
     //   chiTietDonHangs.map(item =>
     //     prismaClient.bienThe.update({
@@ -286,8 +288,7 @@ async function createDonHang(data) {
     //     })
     //   )
     // );
-  
-    
+
     // Create payment record if provided
     if (thanhToan) {
       if (thanhToan.phuongthuc === 'momo') {
@@ -300,7 +301,7 @@ async function createDonHang(data) {
             orderInfo,
             returnUrl,
             ipnUrl
-          )
+          );
           // Create payment record with pending status
           paymentResult = await prismaClient.thanhToan.create({
             data: {
@@ -311,9 +312,9 @@ async function createDonHang(data) {
               // momoRequestId: momoResponse.requestId,
               // momoOrderId: momoResponse.orderId,
               // momoPayUrl: momoResponse.payUrl
-            }
+            },
           });
-          
+
           // Return order with payment URL
           const result = await prismaClient.donHang.findUnique({
             where: { ma: donHang.ma },
@@ -324,8 +325,8 @@ async function createDonHang(data) {
                   ho: true,
                   ten: true,
                   email: true,
-                  so_dien_thoai: true
-                }
+                  so_dien_thoai: true,
+                },
               },
               chiTietDonHangs: {
                 include: {
@@ -333,36 +334,35 @@ async function createDonHang(data) {
                     select: {
                       ma: true,
                       ten: true,
-                      hinhanh: true
-                    }
+                      hinhanh: true,
+                    },
                   },
-                }
+                },
               },
-            }
+            },
           });
-          
+
           return {
             ...result,
-            paymentUrl: momoResponse.payUrl
+            paymentUrl: momoResponse.payUrl,
           };
-          
         } catch (error) {
           console.error('MoMo payment error:', error);
           throw new ApiError(500, 'Lỗi khi tạo thanh toán MoMo');
         }
       } else {
         // Handle other payment methods (COD, etc.)
-          await prismaClient.thanhToan.create({
-            data: {
-              phuongthuc: thanhToan.phuongthuc,
-              ngaythanhtoan: new Date(),
-              trangthai: thanhToan.trangthai || false,
-              madh: donHang.ma
-            }
-          });
+        await prismaClient.thanhToan.create({
+          data: {
+            phuongthuc: thanhToan.phuongthuc,
+            ngaythanhtoan: new Date(),
+            trangthai: thanhToan.trangthai || false,
+            madh: donHang.ma,
+          },
+        });
       }
     }
-    
+
     // Return created order with relationships
     return await prismaClient.donHang.findUnique({
       where: { ma: donHang.ma },
@@ -373,8 +373,8 @@ async function createDonHang(data) {
             ho: true,
             ten: true,
             email: true,
-            so_dien_thoai: true
-          }
+            so_dien_thoai: true,
+          },
         },
         chiTietDonHangs: {
           include: {
@@ -382,12 +382,12 @@ async function createDonHang(data) {
               select: {
                 ma: true,
                 ten: true,
-                hinhanh: true
-              }
+                hinhanh: true,
+              },
             },
-          }
+          },
         },
-      }
+      },
     });
   });
 }
@@ -396,31 +396,34 @@ async function createDonHang(data) {
 async function updateDonHangStatus(id, trangthai, ngaygiao = null) {
   // Check if order exists
   const existingDonHang = await prisma.donHang.findUnique({
-    where: { ma: Number(id) }
+    where: { ma: Number(id) },
   });
-  
+
   if (!existingDonHang) {
     throw new ApiError(404, 'Không tìm thấy đơn hàng');
   }
-  
+
   // Validate status transition
   const validTransitions = {
     da_dat: ['dang_xu_ly', 'da_giao_hang'],
     dang_xu_ly: ['dang_giao_hang', 'da_giao_hang'],
-    dang_giao_hang: ['da_giao_hang']
+    dang_giao_hang: ['da_giao_hang'],
   };
-  
+
   if (
-    existingDonHang.trangthai !== trangthai && 
-    (!validTransitions[existingDonHang.trangthai] || 
-     !validTransitions[existingDonHang.trangthai].includes(trangthai))
+    existingDonHang.trangthai !== trangthai &&
+    (!validTransitions[existingDonHang.trangthai] ||
+      !validTransitions[existingDonHang.trangthai].includes(trangthai))
   ) {
-    throw new ApiError(400, `Không thể chuyển trạng thái từ ${existingDonHang.trangthai} sang ${trangthai}`);
+    throw new ApiError(
+      400,
+      `Không thể chuyển trạng thái từ ${existingDonHang.trangthai} sang ${trangthai}`
+    );
   }
-  
+
   // Update data based on status
   const updateData = { trangthai };
-  
+
   if (trangthai === 'dang_giao_hang' && !existingDonHang.ngaygiao) {
     updateData.ngaygiao = ngaygiao ? new Date(ngaygiao) : new Date();
   }
@@ -428,8 +431,8 @@ async function updateDonHangStatus(id, trangthai, ngaygiao = null) {
     await prisma.thanhToan.update({
       where: { madh: Number(id) },
       data: {
-        trangthai: true
-      }
+        trangthai: true,
+      },
     });
   }
   // Update order
@@ -443,8 +446,8 @@ async function updateDonHangStatus(id, trangthai, ngaygiao = null) {
           ho: true,
           ten: true,
           email: true,
-          so_dien_thoai: true
-        }
+          so_dien_thoai: true,
+        },
       },
       khuyenMai: true,
       chiTietDonHangs: {
@@ -453,21 +456,21 @@ async function updateDonHangStatus(id, trangthai, ngaygiao = null) {
             select: {
               ma: true,
               ten: true,
-              hinhanh: true
-            }
+              hinhanh: true,
+            },
           },
           bienThe: {
             include: {
               mauSac: true,
-              kichCo: true
-            }
-          }
-        }
+              kichCo: true,
+            },
+          },
+        },
       },
-      thanhToans: true
-    }
+      thanhToans: true,
+    },
   });
-  
+
   return updatedDonHang;
 }
 
@@ -479,21 +482,21 @@ async function cancelDonHang(id) {
     include: {
       chiTietDonHangs: {
         include: {
-          bienThe: true
-        }
-      }
-    }
+          bienThe: true,
+        },
+      },
+    },
   });
-  
+
   if (!existingDonHang) {
     throw new ApiError(404, 'Không tìm thấy đơn hàng');
   }
-  
+
   // Check if order can be canceled (only if not delivered)
   if (existingDonHang.trangthai === 'da_giao_hang') {
     throw new ApiError(400, 'Không thể hủy đơn hàng đã giao');
   }
-  
+
   // Use transaction to ensure data consistency
   return await prisma.$transaction(async (prismaClient) => {
     // Update order status and set cancellation date
@@ -501,22 +504,22 @@ async function cancelDonHang(id) {
       where: { ma: Number(id) },
       data: {
         ngayhuy: new Date(),
-        trangthai: 'da_huy'
-      }
+        trangthai: 'da_huy',
+      },
     });
-    
+
     // Restore inventory (add back to stock)
     for (const item of existingDonHang.chiTietDonHangs) {
       await prismaClient.bienThe.update({
         where: { ma: item.mabienthe },
         data: {
           soluong: {
-            increment: item.soluong
-          }
-        }
+            increment: item.soluong,
+          },
+        },
       });
     }
-    
+
     // Return updated order
     return await prismaClient.donHang.findUnique({
       where: { ma: updatedDonHang.ma },
@@ -527,8 +530,8 @@ async function cancelDonHang(id) {
             ho: true,
             ten: true,
             email: true,
-            so_dien_thoai: true
-          }
+            so_dien_thoai: true,
+          },
         },
         khuyenMai: true,
         chiTietDonHangs: {
@@ -537,19 +540,19 @@ async function cancelDonHang(id) {
               select: {
                 ma: true,
                 ten: true,
-                hinhanh: true
-              }
+                hinhanh: true,
+              },
             },
             bienThe: {
               include: {
                 mauSac: true,
-                kichCo: true
-              }
-            }
-          }
+                kichCo: true,
+              },
+            },
+          },
         },
-        thanhToans: true
-      }
+        thanhToans: true,
+      },
     });
   });
 }
@@ -557,52 +560,52 @@ async function cancelDonHang(id) {
 // Update payment status
 async function updateThanhToan(id, data) {
   const { phuongthuc, trangthai } = data;
-  
+
   // Check if payment exists
   const existingThanhToan = await prisma.thanhToan.findUnique({
-    where: { ma: Number(id) }
+    where: { ma: Number(id) },
   });
-  
+
   if (!existingThanhToan) {
     throw new ApiError(404, 'Không tìm thấy thông tin thanh toán');
   }
-  
+
   // Update payment
   const updatedThanhToan = await prisma.thanhToan.update({
     where: { ma: Number(id) },
     data: {
       phuongthuc,
       trangthai: trangthai !== undefined ? Boolean(trangthai) : undefined,
-      ngaythanhtoan: trangthai ? new Date() : existingThanhToan.ngaythanhtoan
-    }
+      ngaythanhtoan: trangthai ? new Date() : existingThanhToan.ngaythanhtoan,
+    },
   });
-  
+
   return updatedThanhToan;
 }
 
 // Create payment for an order
 async function createThanhToan(data) {
   const { madh, phuongthuc, trangthai } = data;
-  
+
   // Check if order exists
   const donHang = await prisma.donHang.findUnique({
-    where: { ma: Number(madh) }
+    where: { ma: Number(madh) },
   });
-  
+
   if (!donHang) {
     throw new ApiError(404, 'Không tìm thấy đơn hàng');
   }
-  
+
   // Create payment
   const thanhToan = await prisma.thanhToan.create({
     data: {
       phuongthuc,
       ngaythanhtoan: new Date(),
       trangthai: Boolean(trangthai),
-      madh: Number(madh)
-    }
+      madh: Number(madh),
+    },
   });
-  
+
   return thanhToan;
 }
 
@@ -615,5 +618,5 @@ module.exports = {
   cancelDonHang,
   updateThanhToan,
   createThanhToan,
-  getDonHangById
+  getDonHangById,
 };

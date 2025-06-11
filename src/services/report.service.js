@@ -84,6 +84,59 @@ class ReportService {
       totalSpending: totalSpending._sum.tonggia || 0,
     };
   }
+
+  // Get featured products with sales count
+  async getFeaturedProducts(limit = 5) {
+    const featuredProducts = await prisma.sanPham.findMany({
+      where: {
+        noibat: true,
+        trangthai: true, // Only active products
+      },
+      select: {
+        ma: true,
+        ten: true,
+        giaban: true,
+        giagiam: true,
+        hinhanh: true,
+        _count: {
+          select: {
+            chiTietDonHangs: {
+              where: {
+                donHang: {
+                  trangthai: 'da_giao_hang', // Only count completed orders
+                },
+              },
+            },
+          },
+        },
+        danhMuc: {
+          select: {
+            ma: true,
+            ten: true,
+          },
+        },
+        thuongHieu: {
+          select: {
+            ma: true,
+            ten: true,
+          },
+        },
+      },
+      orderBy: {
+        chiTietDonHangs: {
+          _count: 'desc',
+        },
+      },
+      take: limit,
+    });
+
+    // Transform the response to include total sales
+    return featuredProducts.map((product) => ({
+      ...product,
+      totalSales: product._count.chiTietDonHangs,
+      _count: undefined, // Remove the _count field from response
+    }));
+  }
 }
 
 module.exports = new ReportService();
