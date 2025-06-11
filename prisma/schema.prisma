@@ -215,16 +215,39 @@ model DanhGia {
   sanPham   SanPham   @relation(fields: [masp], references: [ma], onDelete: Cascade)
 }
 
+model LoaiTin {
+  ma          Int      @id @default(autoincrement())
+  tenloaitin String    @db.VarChar(100)
+  trangthai   Boolean?  @default(true)
+  tin         TinTuc[]
+}
 // TinTuc
 model TinTuc {
   ma          Int      @id @default(autoincrement())
   tieude      String
   noidung     String
-  ngaydang    DateTime
-  hinhanh     String
+  ngaydang    DateTime  @default(now())
+  hinhdaidien     String
+  tinhot        Boolean                 @default(false)
+  trangthai     Boolean                 @default(true)
   manguoidung Int
-
+  maloaitin    Int     
+  loaitin      LoaiTin @relation(fields: [maloaitin], references: [ma], onDelete: Cascade, onUpdate: NoAction)
   nguoiDung NguoiDung @relation(fields: [manguoidung], references: [ma])
+}
+model SinhVien {
+  ma          Int      @id @default(autoincrement())
+  ten      String
+  diem     String
+  makhoa Int
+
+  khoa Khoa @relation(fields: [makhoa], references: [ma])
+}
+
+model Khoa{
+  ma         Int      @id @default(autoincrement())
+  ten        String
+  sinhViens SinhVien[]
 }
 
 enum TrangThaiDonHang {

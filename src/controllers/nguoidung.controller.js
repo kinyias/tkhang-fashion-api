@@ -1,4 +1,5 @@
 const prisma = require('../lib/prisma')
+const bcrypt = require('bcrypt');
 
 // Get user profile
 async function getProfile(req, res, next) {
@@ -65,7 +66,6 @@ async function updateProfile(req, res, next) {
 async function changePassword(req, res, next) {
   try {
     const { currentPassword, newPassword } = req.body;
-
     const user = await prisma.nguoiDung.findUnique({
       where: { ma: req.user.ma },
     });
@@ -77,7 +77,7 @@ async function changePassword(req, res, next) {
     // Check current password
     const validPassword = await bcrypt.compare(currentPassword, user.mat_khau);
     if (!validPassword) {
-      return res.status(400).json({ message: 'Sai password' });
+      return res.status(400).json({ message: 'Mật khẩu hiện tại không chính xác' });
     }
 
     // Hash new password
@@ -86,8 +86,8 @@ async function changePassword(req, res, next) {
 
     // Update password
     await prisma.nguoiDung.update({
-      where: { id: req.user.id },
-      data: { password: hashedPassword },
+      where: { ma: req.user.ma },
+      data: { mat_khau: hashedPassword },
     });
 
     return res.status(200).json({ message: 'Đổi mật khẩu thành công' });

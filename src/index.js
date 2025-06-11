@@ -18,6 +18,8 @@ const sanPhamRoutes = require('./routes/sanpham.route');
 const khuyenMaiRoutes = require('./routes/khuyenmai.route');
 const donHangRoutes = require('./routes/donhang.route');
 const danhGiaRoutes = require('./routes/danhgia.route');
+const tintucRoutes = require('./routes/tintuc.route');
+const loaitinRoutes = require('./routes/loaitin.route')
 // Import passport config
 require('./config/passport');
 
@@ -46,6 +48,8 @@ app.use('/api/kichco', kichCoRoutes);
 app.use('/api/khuyenmai', khuyenMaiRoutes);
 app.use('/api/donhang', donHangRoutes);
 app.use('/api/danhgia', danhGiaRoutes);
+app.use('/api/loaitin', loaitinRoutes);
+app.use('/api/tintuc', tintucRoutes);
 // Health check route
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok', message: 'Server is running' });

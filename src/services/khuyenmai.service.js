@@ -15,7 +15,7 @@ async function getAllKhuyenMai(page = 1, limit = 10, search = '', filters = {}, 
   }
   
   // Apply additional filters
-  if (filters.loaikhuyenmai) {
+  if (filters.loaikhuyenmai && filters.loaikhuyenmai !== 'all') {
     where.loaikhuyenmai = filters.loaikhuyenmai;
   }
   
