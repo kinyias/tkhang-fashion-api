@@ -424,7 +424,14 @@ async function updateDonHangStatus(id, trangthai, ngaygiao = null) {
   if (trangthai === 'dang_giao_hang' && !existingDonHang.ngaygiao) {
     updateData.ngaygiao = ngaygiao ? new Date(ngaygiao) : new Date();
   }
-  
+  if (trangthai === 'da_giao_hang') {
+    await prisma.thanhToan.update({
+      where: { madh: Number(id) },
+      data: {
+        trangthai: true
+      }
+    });
+  }
   // Update order
   const updatedDonHang = await prisma.donHang.update({
     where: { ma: Number(id) },
