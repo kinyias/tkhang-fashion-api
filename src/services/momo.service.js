@@ -53,8 +53,6 @@ async function handleMoMoReturn(query) {
       include: {
         thanhToans: {
           where: { phuongthuc: 'momo' },
-          orderBy: { ngaythanhtoan: 'desc' },
-          take: 1
         }
       }
     });
