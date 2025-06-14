@@ -1,6 +1,6 @@
-const prisma = require('../lib/prisma')
+const prisma = require('../lib/prisma');
 const bcrypt = require('bcrypt');
-
+const nguoiDungService = require('../services/nguoidung.service');
 // Get user profile
 async function getProfile(req, res, next) {
   try {
@@ -77,7 +77,9 @@ async function changePassword(req, res, next) {
     // Check current password
     const validPassword = await bcrypt.compare(currentPassword, user.mat_khau);
     if (!validPassword) {
-      return res.status(400).json({ message: 'Mật khẩu hiện tại không chính xác' });
+      return res
+        .status(400)
+        .json({ message: 'Mật khẩu hiện tại không chính xác' });
     }
 
     // Hash new password
@@ -96,8 +98,76 @@ async function changePassword(req, res, next) {
   }
 }
 
+// Get all users with filters and pagination (Admin)
+async function getAllUsers(req, res, next) {
+  try {
+    const { page, limit, search, vai_tro, xac_thuc_email, sortBy, sortOrder } =
+      req.query;
+    const result = await nguoiDungService.getAllUsers(
+      Number(page) || 1,
+      Number(limit) || 10,
+      search,
+      vai_tro,
+      xac_thuc_email === 'true'
+        ? true
+        : xac_thuc_email === 'false'
+        ? false
+        : null,
+      sortBy,
+      sortOrder
+    );
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+}
+
+// Create new user (Admin)
+async function createUser(req, res, next) {
+  try {
+    const user = await nguoiDungService.createUser(req.body);
+    res.status(201).json({
+      message: 'Tạo người dùng thành công',
+      user,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+// Update user role (Admin)
+async function updateUserRole(req, res, next) {
+  try {
+    const { vai_tro } = req.body;
+    const user = await nguoiDungService.updateUserRole(req.params.id, vai_tro);
+    res.json({
+      message: 'Cập nhật vai trò thành công',
+      user,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+// Update user information (Admin)
+async function updateUser(req, res, next) {
+  try {
+    const user = await nguoiDungService.updateUser(req.params.id, req.body);
+    res.json({
+      message: 'Cập nhật thông tin thành công',
+      user,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   getProfile,
   updateProfile,
   changePassword,
+  getAllUsers,
+  createUser,
+  updateUserRole,
+  updateUser,
 };

@@ -96,4 +96,6 @@ router.delete(
   tinTucController.deleteTinTuc
 );
 
+router.get('/:id/related', tinTucController.getRelatedTinTuc);
+
 module.exports = router;

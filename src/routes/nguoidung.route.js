@@ -17,7 +17,6 @@ router.put(
     body('ho').optional().isString(),
     body('ten').optional().isString(),
     body('so_dien_thoai').optional().isString(),
-
   ],
   userController.updateProfile
 );
@@ -38,19 +37,60 @@ router.put(
 );
 
 // Admin routes
-router.get('/admin/users', authorize(['admin']), async (req, res) => {
-  const users = await prisma.nguoiDung.findMany({
-    select: {
-      ma: true,
-      email: true,
-      ho: true,
-      ten: true,
-      vai_tro: true,
-      xac_thuc_email: true,
-      ngay_tao: true,
-    },
-  });
-  res.json(users);
-});
+router.get(
+  '/admin/users',
+  authenticate,
+  authorize(['admin']),
+  userController.getAllUsers
+);
+
+router.post(
+  '/admin/users',
+  authenticate,
+  authorize(['admin']),
+  [
+    body('email')
+      .isEmail()
+      .withMessage('Email không hợp lệ')
+      .notEmpty()
+      .withMessage('Email không được để trống'),
+    body('ho').optional().isString().withMessage('Họ phải là chuỗi'),
+    body('ten').optional().isString().withMessage('Tên phải là chuỗi'),
+    body('so_dien_thoai')
+      .optional()
+      .isString()
+      .withMessage('Số điện thoại phải là chuỗi'),
+    body('vai_tro').notEmpty().withMessage('Vai trò không được để trống'),
+    body('mat_khau')
+      .isLength({ min: 8 })
+      .withMessage('Mật khẩu phải có ít nhất 8 ký tự')
+      .notEmpty()
+      .withMessage('Mật khẩu không được để trống'),
+  ],
+  userController.createUser
+);
+
+router.put(
+  '/admin/users/:id/role',
+  authenticate,
+  authorize(['admin']),
+  [body('vai_tro').notEmpty().withMessage('Vai trò không được để trống')],
+  userController.updateUserRole
+);
+
+router.put(
+  '/admin/users/:id',
+  authenticate,
+  authorize(['admin']),
+  [
+    body('ho').optional().isString().withMessage('Họ phải là chuỗi'),
+    body('ten').optional().isString().withMessage('Tên phải là chuỗi'),
+    body('so_dien_thoai')
+      .optional()
+      .isString()
+      .withMessage('Số điện thoại phải là chuỗi'),
+  ],
+  userController.updateUser
+);
 
 module.exports = router;

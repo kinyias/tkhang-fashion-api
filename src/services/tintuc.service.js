@@ -356,19 +356,18 @@ async function getTinTucByTrangThai(trangthai) {
 }
 
 async function increaseViewCount(tinId) {
-
   // Update view count atomically
   const updatedTin = await prisma.tinTuc.update({
     where: { ma: tinId },
     data: {
-      solanxem: {
+      soluotxem: {
         increment: 1,
       },
     },
     select: {
       ma: true,
       tieude: true,
-      solanxem: true,
+      soluotxem: true,
     },
   });
 
@@ -376,8 +375,56 @@ async function increaseViewCount(tinId) {
     throw new ApiError(404, 'Không tìm thấy tin tức');
   }
 
-  return {data: updatedTin};
+  return { data: updatedTin };
 }
+
+async function getRelatedTinTuc(tinId, limit = 4) {
+  // First get the current news to get its category
+  const currentTin = await prisma.tinTuc.findUnique({
+    where: { ma: Number(tinId) },
+    select: { maloaitin: true },
+  });
+
+  if (!currentTin) {
+    throw new ApiError(404, 'Không tìm thấy tin tức');
+  }
+
+  // Get related news from the same category, excluding the current news
+  const relatedTins = await prisma.tinTuc.findMany({
+    where: {
+      maloaitin: currentTin.maloaitin,
+      ma: {
+        not: Number(tinId),
+      },
+      trangthai: true,
+    },
+    take: limit,
+    orderBy: {
+      ngaydang: 'desc',
+    },
+    include: {
+      loaitin: {
+        select: {
+          ma: true,
+          tenloaitin: true,
+        },
+      },
+      nguoiDung: {
+        select: {
+          ma: true,
+          ho: true,
+          ten: true,
+          email: true,
+        },
+      },
+    },
+  });
+
+  return {
+    data: relatedTins,
+  };
+}
+
 module.exports = {
   getAllTinTuc,
   getTinTucById,
@@ -387,5 +434,6 @@ module.exports = {
   deleteManyTinTuc,
   getTinTucByLoaiTinId,
   getTinTucByTrangThai,
-  increaseViewCount
+  increaseViewCount,
+  getRelatedTinTuc,
 };
