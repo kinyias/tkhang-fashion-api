@@ -355,6 +355,29 @@ async function getTinTucByTrangThai(trangthai) {
   };
 }
 
+async function increaseViewCount(tinId) {
+
+  // Update view count atomically
+  const updatedTin = await prisma.tinTuc.update({
+    where: { ma: tinId },
+    data: {
+      solanxem: {
+        increment: 1,
+      },
+    },
+    select: {
+      ma: true,
+      tieude: true,
+      solanxem: true,
+    },
+  });
+
+  if (!updatedTin) {
+    throw new ApiError(404, 'Không tìm thấy tin tức');
+  }
+
+  return {data: updatedTin};
+}
 module.exports = {
   getAllTinTuc,
   getTinTucById,
@@ -364,4 +387,5 @@ module.exports = {
   deleteManyTinTuc,
   getTinTucByLoaiTinId,
   getTinTucByTrangThai,
+  increaseViewCount
 };

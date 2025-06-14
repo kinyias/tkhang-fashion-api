@@ -230,6 +230,7 @@ model TinTuc {
   hinhdaidien     String
   tinhot        Boolean                 @default(false)
   trangthai     Boolean                 @default(true)
+  soluotxem    Int                    @default(0)
   manguoidung Int
   maloaitin    Int     
   loaitin      LoaiTin @relation(fields: [maloaitin], references: [ma], onDelete: Cascade, onUpdate: NoAction)

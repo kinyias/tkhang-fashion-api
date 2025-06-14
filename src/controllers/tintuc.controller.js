@@ -160,7 +160,43 @@ async function getTinTucByTrangThai(req, res, next) {
     next(error);
   }
 }
+const increaseViewCount = async (req, res) => {
+  const { ma } = req.params;
 
+  try {
+    // Validate ID
+    const tinId = Number(ma);
+    if (isNaN(tinId)) {
+      return res.status(400).json({ error: 'Mã không hợp lệ' });
+    }
+    const result = await tinTucService.increaseViewCount(tinId);
+    // Atomic increment to avoid race conditions
+    const updatedTin = await prisma.tinTuc.update({
+      where: { ma: tinId },
+      data: {
+        solanxem: {
+          increment: 1
+        }
+      },
+      select: {
+        id_tin: true,
+        tieude: true,
+        solanxem: true
+      }
+    });
+
+    if (!updatedTin) {
+      return res.status(404).json({ error: 'Article not found' });
+    }
+
+    return res.status(200).json(result);
+  } catch (error) {
+     next(error);
+    res.status(500).json({
+      error: 'Cập nhật số lần xem thất bại',
+    });
+  }
+};
 module.exports = {
   getAllTinTuc,
   getTinTucById,
@@ -170,4 +206,5 @@ module.exports = {
   deleteManyTinTuc,
   getTinTucByLoaiTinId,
   getTinTucByTrangThai,
+  increaseViewCount
 };

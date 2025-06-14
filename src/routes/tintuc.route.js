@@ -10,7 +10,7 @@ router.get('/', tinTucController.getAllTinTuc);
 
 // Get news by category ID (public)
 router.get('/by-loaitin/:loaiTinId', tinTucController.getTinTucByLoaiTinId);
-
+router.patch('/:id/views', tinTucController.increaseViewCount);
 // Get news by ID (public)
 router.get('/:id', tinTucController.getTinTucById);
 
