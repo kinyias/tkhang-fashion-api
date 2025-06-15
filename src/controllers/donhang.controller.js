@@ -69,7 +69,6 @@ async function createDonHang(req, res, next) {
 
     // If user is logged in, use their ID, otherwise use the one from the request
     const manguoidung = req.user ? req.user.ma : req.body.manguoidung;
-    
     // Create order data
     // Add payment URLs to order data
     const orderData = {

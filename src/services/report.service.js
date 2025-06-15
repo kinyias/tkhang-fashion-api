@@ -60,7 +60,7 @@ class ReportService {
 
   // Get customer stats (total orders and spending)
   async getCustomerStats(customerId) {
-    const [totalOrders, totalSpending] = await Promise.all([
+    const [totalOrders, totalSpending, totalGoing] = await Promise.all([
       // Get total orders for customer
       prisma.donHang.count({
         where: {
@@ -77,11 +77,21 @@ class ReportService {
           tonggia: true,
         },
       }),
+      // Get total going orders for customer
+      prisma.donHang.count({
+        where: {
+          manguoidung: customerId,
+          trangthai: 'dang_giao_hang',
+        },
+      }),
     ]);
-
+    console.log(customerId)
+    console.log(totalGoing)
+    console.log(totalSpending)
     return {
       totalOrders,
       totalSpending: totalSpending._sum.tonggia || 0,
+      totalGoing,
     };
   }
 

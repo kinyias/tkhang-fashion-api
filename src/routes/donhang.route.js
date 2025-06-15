@@ -1,7 +1,7 @@
 const express = require('express');
 const { body, param, query } = require('express-validator');
 const donHangController = require('../controllers/donhang.controller');
-const { authenticate, authorize } = require('../middlewares/authMiddleware');
+const { authenticate, authorize, authenticateUser } = require('../middlewares/authMiddleware');
 
 const router = express.Router();
 
@@ -53,6 +53,7 @@ router.get(
 // Create new order (authenticated users)
 router.post(
   '/',
+  authenticateUser,
   [
     body('ten').notEmpty().withMessage('Tên không được để trống'),
     body('email').optional().isEmail().withMessage('Nhập email hợp lệ'),

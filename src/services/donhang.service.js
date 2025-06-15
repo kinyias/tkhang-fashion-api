@@ -234,7 +234,7 @@ async function createDonHang(data) {
     returnUrl,
     ipnUrl,
   } = data;
-
+  console.log('service', manguoidung)
   // Validate order items
   if (
     !chiTietDonHangs ||

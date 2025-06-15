@@ -14,7 +14,16 @@ function authenticate(req, res, next) {
     next();
   })(req, res, next);
 }
-
+// JWT authentication middleware
+function authenticateUser(req, res, next) {
+  passport.authenticate('jwt', { session: false }, (err, user, info) => {
+    if (err) {
+      return next(err);
+    }
+    req.user = user;
+    next();
+  })(req, res, next);
+}
 // Role-based authorization middleware
 function authorize(roles = []) {
   if (typeof roles === 'string') {
@@ -34,5 +43,6 @@ function authorize(roles = []) {
 
 module.exports = {
   authenticate,
+  authenticateUser,
   authorize
 };
