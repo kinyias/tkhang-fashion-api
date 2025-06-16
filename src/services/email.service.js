@@ -7,8 +7,8 @@ const transporter = nodemailer.createTransport({
   secure: process.env.EMAIL_PORT === '465',
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD
-  }
+    pass: process.env.EMAIL_PASSWORD,
+  },
 });
 
 // Send verification email
@@ -25,7 +25,7 @@ async function sendVerificationEmail(email, token) {
       <p>Vui lòng click vào link bên dưới để xác minh email của bạn:</p>
      <a href="${verificationUrl}">Xác minh Email</a>
 <p>Nếu bạn không yêu cầu điều này, vui lòng bỏ qua email này.</p> không yêu cầu điều này, vui lòng bỏ qua email này.</p>
-    `
+    `,
   };
 
   await transporter.sendMail(mailOptions);
@@ -46,7 +46,7 @@ async function sendPasswordResetEmail(email, token) {
 <a href="${resetUrl}">Đặt lại Mật khẩu</a>
 <p>Nếu bạn không yêu cầu điều này, vui lòng bỏ qua email này.</p>
 <p>Liên kết này sẽ hết hạn sau 1 giờ.</p>
-    `
+    `,
   };
 
   await transporter.sendMail(mailOptions);
@@ -61,21 +61,66 @@ async function sendNewOrderNotificationToAdmin(donhang) {
       <p>Một khách hàng vừa đặt đơn hàng mới.</p>
       <h2>Thông tin đơn hàng</h2>
       <ul>
-        ${donhang.chiTietDonHangs.map(item => `
-          <li>${item.sanPham.ten} - ${item.soluong} x ${formatCurrency(item.dongia.toLocaleString())}</li>
-        `).join('')}
+        ${donhang.chiTietDonHangs
+          .map(
+            (item) => `
+          <li>${item.sanPham.ten} - ${item.soluong} x ${formatCurrency(
+              item.dongia.toLocaleString()
+            )}</li>
+        `
+          )
+          .join('')}
       </ul>
       <p><strong>Tổng tiền:</strong> ${formatCurrency(donhang.tonggia)}</p>
       <p><strong>Mã đơn hàng:</strong> ${donhang.ma}</p>
-      <p><strong>Khách hàng:</strong> ${donhang.ten} (${donhang.email || ''})</p>
-      <p><strong>Thời gian đặt:</strong> ${new Date(donhang.ngaydat).toLocaleString()}</p>
-    `
+      <p><strong>Khách hàng:</strong> ${donhang.ten} (${
+      donhang.email || ''
+    })</p>
+      <p><strong>Thời gian đặt:</strong> ${new Date(
+        donhang.ngaydat
+      ).toLocaleString()}</p>
+    `,
   };
 
   await transporter.sendMail(mailOptions);
 }
+
+async function sendNewOrderNotificationToUser(donhang) {
+  const mailOptions = {
+    from: process.env.EMAIL_FROM,
+    to: donhang.email,
+    subject: 'Xác nhận đơn hàng của bạn',
+    html: `
+      <h1>Cảm ơn bạn đã đặt hàng!</h1>
+      <p>Chúng tôi đã nhận được đơn hàng của bạn và đang xử lý.</p>
+      <h2>Thông tin đơn hàng</h2>
+      <ul>
+        ${donhang.chiTietDonHangs
+          .map(
+            (item) => `
+          <li>${item.sanPham.ten} - ${item.soluong} x ${formatCurrency(
+              item.dongia.toLocaleString()
+            )}</li>
+        `
+          )
+          .join('')}
+      </ul>
+      <p><strong>Tổng tiền:</strong> ${formatCurrency(donhang.tonggia)}</p>
+      <p><strong>Mã đơn hàng:</strong> ${donhang.ma}</p>
+      <p><strong>Thời gian đặt:</strong> ${new Date(
+        donhang.ngaydat
+      ).toLocaleString()}</p>
+      <p>Chúng tôi sẽ thông báo cho bạn khi đơn hàng được xử lý.</p>
+      <p>Nếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi.</p>
+    `,
+  };
+
+  await transporter.sendMail(mailOptions);
+}
+
 module.exports = {
   sendVerificationEmail,
   sendNewOrderNotificationToAdmin,
-  sendPasswordResetEmail
+  sendPasswordResetEmail,
+  sendNewOrderNotificationToUser,
 };

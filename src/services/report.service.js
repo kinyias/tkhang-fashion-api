@@ -85,9 +85,6 @@ class ReportService {
         },
       }),
     ]);
-    console.log(customerId)
-    console.log(totalGoing)
-    console.log(totalSpending)
     return {
       totalOrders,
       totalSpending: totalSpending._sum.tonggia || 0,

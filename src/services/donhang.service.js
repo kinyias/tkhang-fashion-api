@@ -157,12 +157,14 @@ async function getDonHangById(id) {
 // Get orders by user ID
 async function getDonHangByUserId(userId, page = 1, limit = 10, trangthai) {
   const skip = (page - 1) * limit;
-  const where = { manguoidung: Number(userId) };
+  const where = {};
   // Filter by order status
+  if (userId) {
+    where.manguoidung = Number(userId);
+  }
   if (trangthai) {
     where.trangthai = trangthai;
   }
-
   // Get orders with pagination
   const [donHangs, totalCount] = await Promise.all([
     prisma.donHang.findMany({
@@ -234,7 +236,6 @@ async function createDonHang(data) {
     returnUrl,
     ipnUrl,
   } = data;
-  console.log('service', manguoidung)
   // Validate order items
   if (
     !chiTietDonHangs ||

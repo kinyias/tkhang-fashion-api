@@ -33,8 +33,24 @@ model NguoiDung {
   donHangs DonHang[]
   danhGias DanhGia[]
   tinTucs  TinTuc[]
-
+  diaChis  DiaChi[]
   @@map("NguoiDung")
+}
+model DiaChi {
+  ma             Int       @id @default(autoincrement()) @map("ma")
+  tennguoinhan String    @map("tennguoinhan") @db.VarChar(255)
+  email          String?   @map("email") @db.VarChar(255)
+  sodienthoai  String    @map("sodienthoai") @db.VarChar(20)
+  diachi        String    @map("diachi") @db.VarChar(255) // Số nhà, tên đường
+  phuongxa      String    @map("phuongxa") @db.VarChar(100)
+  quanhuyen     String    @map("quanhuyen") @db.VarChar(100)
+  tinhthanh     String    @map("tinhthanh") @db.VarChar(100)
+  macdinh Boolean @default(false) @map("macdinh")
+  loaidiachi   LoaiDiaChi 
+  nguoiDung      NguoiDung @relation(fields: [manguoidung], references: [ma])
+  manguoidung  Int       @map("manguoidung")
+
+  @@map("DiaChi")
 }
 
 // ThuongHieu
@@ -262,4 +278,10 @@ enum TrangThaiDonHang {
 enum LoaiKhuyenMai {
   tien_mat
   phan_tram
+}
+
+enum LoaiDiaChi {
+  NHA
+  VAN_PHONG
+  KHAC
 }

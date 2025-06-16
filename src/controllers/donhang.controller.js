@@ -37,7 +37,7 @@ async function getDonHangById(req, res, next) {
 // Get orders by user ID
 async function getDonHangByUserId(req, res, next) {
   try {
-    const { userId } = req.params;
+    const userId = req.user.ma;
     const { page = 1, limit = 10, trangthai } = req.query;
     const result = await donHangService.getDonHangByUserId(userId, page, limit, trangthai);
     return res.status(200).json(result);
@@ -82,12 +82,18 @@ async function createDonHang(req, res, next) {
      await emailService.sendNewOrderNotificationToAdmin(donHang);
     // If MoMo payment, return payment URL
     if (req.body.paymentMethod === 'momo' && donHang.paymentUrl) {
+      if(orderData.email && orderData.email !== ''){
+        await emailService.sendNewOrderNotificationToUser(donHang);
+      }
       return res.status(201).json({
         message: 'Tạo đơn hàng thành công. Vui lòng thanh toán qua MoMo',
         donHang,
         paymentUrl: donHang.paymentUrl,
         paymentMethod: 'momo'
       });
+    }
+    if(orderData.email && orderData.email !== ''){
+      await emailService.sendNewOrderNotificationToUser(donHang);
     }
     return res.status(201).json({
       message: 'Tạo đơn hàng thành công',
