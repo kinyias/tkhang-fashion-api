@@ -271,6 +271,11 @@ async function createSanPham(data) {
         },
       },
     });
+  },
+  {
+    maxWait: 10000, // Maximum time to wait for a transaction slot (10s)
+    timeout: 20000, // Maximum time the transaction can run (20s)
+    isolationLevel: 'ReadCommitted', // Use a more permissive isolation level
   });
 
   // Index the new product in Elasticsearch (don't block the response)
