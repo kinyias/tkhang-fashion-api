@@ -461,6 +461,10 @@ async function updateSanPham(id, data) {
     }
 
     return updatedSanPham;
+  }, {
+    maxWait: 10000, // Maximum time to wait for a transaction slot (10s)
+    timeout: 20000, // Maximum time the transaction can run (20s)
+    isolationLevel: 'ReadCommitted', // Use a more permissive isolation level
   });
 
   // Prepare data for Elasticsearch update
