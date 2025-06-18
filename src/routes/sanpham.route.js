@@ -13,6 +13,7 @@ router.get('/with-variants', sanPhamController.getAllSanPhamWithVariants);
 // Advanced product search with comprehensive filtering (public)
 router.get('/advanced-search', sanPhamController.advancedSearchSanPham);
 router.post('/elasticsearch/create-index', sanPhamController.createIndexES);
+router.post('/elasticsearch/recreate-index', sanPhamController.recreateIndexES);
 router.get('/elasticsearch/sync-all', sanPhamController.syncAllProductsToES);
 router.get('/elasticsearch/health', sanPhamController.checkElasticsearchHealth);
 router.post('/elasticsearch/sync/:productId', sanPhamController.syncProductToES);

@@ -225,6 +225,16 @@ async function createIndexES(req, res, next) {
     next(error);
   }
 }
+async function recreateIndexES(req, res, next) {
+  try {
+    await ElasticsearchService.recreateIndex();
+    return res.status(200).json({
+      message: 'Elasticsearch index recreated successfully'
+    });
+  } catch (error) {
+    next(error);
+  }
+}
 // Health check for Elasticsearch
 async function checkElasticsearchHealth(req, res, next) {
   try {
@@ -252,5 +262,6 @@ module.exports = {
   syncProductToES,
   syncAllProductsToES,
   createIndexES,
-  checkElasticsearchHealth
+  checkElasticsearchHealth,
+  recreateIndexES
 };

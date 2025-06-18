@@ -204,15 +204,6 @@ async function createSanPham(data) {
     mauSacs,
   } = data;
 
-  // Check if product with the same name exists
-  const existingSanPham = await prisma.sanPham.findFirst({
-    where: { ten },
-  });
-
-  if (existingSanPham) {
-    throw new ApiError(409, 'Sản phẩm với tên này đã tồn tại');
-  }
-
   // Use transaction to create product, variants, and color images
   const result = await prisma.$transaction(async (prismaClient) => {
     // Create product
@@ -310,34 +301,6 @@ async function updateSanPham(id, data) {
     mauSacs,
   } = data;
 
-  // Check if product exists
-  const existingSanPham = await prisma.sanPham.findUnique({
-    where: { ma: Number(id) },
-    include: {
-      danhMuc: true,
-      loaiSanPham: true,
-      thuongHieu: true,
-    },
-  });
-
-  if (!existingSanPham) {
-    throw new ApiError(404, 'Không tìm thấy sản phẩm');
-  }
-
-  // Check if another product with the same name exists
-  if (ten && ten !== existingSanPham.ten) {
-    const duplicateName = await prisma.sanPham.findFirst({
-      where: {
-        ten,
-        ma: { not: Number(id) },
-      },
-    });
-
-    if (duplicateName) {
-      throw new ApiError(409, 'Sản phẩm với tên này đã tồn tại');
-    }
-  }
-
   // Use transaction to update product, variants, and color images
   const result = await prisma.$transaction(async (prismaClient) => {
     // Update product
@@ -386,12 +349,13 @@ async function updateSanPham(id, data) {
       // Get existing variants
       const existingBienThes = await prismaClient.bienThe.findMany({
         where: { masp: Number(id) },
+        select: { ma: true },
       });
 
       // Identify variants to update, create, or delete
       const existingBienTheIds = existingBienThes.map((bt) => bt.ma);
       const incomingBienTheIds = bienThes
-        .filter((bt) => bt.ma)
+        .filter((bt) => bt.ma && bt.ma !== 0)
         .map((bt) => Number(bt.ma));
 
       // Variants to delete (exist in DB but not in incoming data)
@@ -409,49 +373,45 @@ async function updateSanPham(id, data) {
           },
         });
       }
-      // Process each variant
-      for (const bienThe of bienThes) {
-        if (bienThe.ma != 0) {
-          // Update existing variant
-          await prismaClient.bienThe.update({
-            where: { ma: Number(bienThe.ma) },
-            data: {
-              gia:
-                typeof bienThe.gia === 'string'
-                  ? parseFloat(bienThe.gia)
-                  : bienThe.gia,
-              soluong: Number(bienThe.soluong),
-              mamausac: Number(bienThe.mamausac),
-              makichco: Number(bienThe.makichco),
-            },
-          });
-        } else {
-          // Create new variant
-          await prismaClient.bienThe.create({
-            data: {
-              gia:
-                typeof bienThe.gia === 'string'
-                  ? parseFloat(bienThe.gia)
-                  : bienThe.gia,
-              soluong: Number(bienThe.soluong),
-              masp: updatedSanPham.ma,
-              mamausac: Number(bienThe.mamausac),
-              makichco: Number(bienThe.makichco),
-            },
-          });
-        }
-      }
+      const bienThesToUpdate = bienThes.filter(bt => bt.ma && bt.ma !== 0);
+      const bienThesToCreate = bienThes.filter(bt => !bt.ma || bt.ma === 0);
+      
+      const updatePromises = bienThesToUpdate.map(bienThe =>
+        prismaClient.bienThe.update({
+          where: { ma: Number(bienThe.ma) },
+          data: {
+            gia: typeof bienThe.gia === 'string' ? parseFloat(bienThe.gia) : bienThe.gia,
+            soluong: Number(bienThe.soluong),
+            mamausac: Number(bienThe.mamausac),
+            makichco: Number(bienThe.makichco),
+          },
+        })
+      );
+      const createData = bienThesToCreate.map(bienThe => ({
+        gia: typeof bienThe.gia === 'string' ? parseFloat(bienThe.gia) : bienThe.gia,
+        soluong: Number(bienThe.soluong),
+        masp: updatedSanPham.ma,
+        mamausac: Number(bienThe.mamausac),
+        makichco: Number(bienThe.makichco),
+      }));
+
+      // Execute all variant updates concurrently
+      await Promise.all([
+        ...updatePromises,
+        ...(createData.length > 0 ? [prismaClient.bienThe.createMany({ data: createData })] : [])
+      ]);
     }
 
     // Update color images if provided
     if (mauSacs && mauSacs.length > 0) {
       const existingMauSacs = await prismaClient.hinhAnhMauSac.findMany({
         where: { masp: Number(id) },
+        select: { ma: true },
       });
       // Identify to update, create, or delete
       const existingMauSacIds = existingMauSacs.map((bt) => bt.ma);
       const incomingMauSacIds = mauSacs
-        .filter((bt) => bt.ma)
+        .filter((bt) => bt.ma && bt.ma !== 0)
         .map((bt) => Number(bt.ma));
 
       // To delete (exist in DB but not in incoming data)
@@ -468,30 +428,36 @@ async function updateSanPham(id, data) {
           },
         });
       }
-      for (const mauSac of mauSacs) {
-        if (mauSac.ma != 0) {
-          // Update existing variant
-          await prismaClient.hinhAnhMauSac.update({
-            where: { ma: Number(mauSac.ma) },
-            data: {
-              hinhAnh: mauSac.hinhAnh,
-              anhChinh: mauSac.anhChinh || false,
-              mamausac: mauSac.mamausac,
-              masp: updatedSanPham.ma,
-            },
-          });
-        } else {
-          // Create new variant
-          await prismaClient.hinhAnhMauSac.create({
-            data: {
-              hinhAnh: mauSac.hinhAnh,
-              anhChinh: mauSac.anhChinh || false,
-              mamausac: mauSac.mamausac,
-              masp: updatedSanPham.ma,
-            },
-          });
-        }
-      }
+      // Separate updates and creates
+      const mauSacsToUpdate = mauSacs.filter(ms => ms.ma && ms.ma !== 0);
+      const mauSacsToCreate = mauSacs.filter(ms => !ms.ma || ms.ma === 0);
+
+      // Batch update existing color images
+      const updatePromises = mauSacsToUpdate.map(mauSac =>
+        prismaClient.hinhAnhMauSac.update({
+          where: { ma: Number(mauSac.ma) },
+          data: {
+            hinhAnh: mauSac.hinhAnh,
+            anhChinh: mauSac.anhChinh || false,
+            mamausac: mauSac.mamausac,
+            masp: updatedSanPham.ma,
+          },
+        })
+      );
+
+      // Batch create new color images
+      const createData = mauSacsToCreate.map(mauSac => ({
+        hinhAnh: mauSac.hinhAnh,
+        anhChinh: mauSac.anhChinh || false,
+        mamausac: mauSac.mamausac,
+        masp: updatedSanPham.ma,
+      }));
+
+      // Execute all color image updates concurrently
+      await Promise.all([
+        ...updatePromises,
+        ...(createData.length > 0 ? [prismaClient.hinhAnhMauSac.createMany({ data: createData })] : [])
+      ]);
     }
 
     return updatedSanPham;

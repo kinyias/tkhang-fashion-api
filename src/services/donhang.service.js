@@ -282,18 +282,18 @@ async function createDonHang(data) {
     });
 
     // Update inventory (reduce stock)
-    //  await Promise.all(
-    //   chiTietDonHangs.map(item =>
-    //     prismaClient.bienThe.update({
-    //       where: { ma: Number(item.mabienthe) },
-    //       data: {
-    //         soluong: {
-    //           decrement: Number(item.soluong)
-    //         }
-    //       }
-    //     })
-    //   )
-    // );
+     await Promise.all(
+      chiTietDonHangs.map(item =>
+        prismaClient.bienThe.update({
+          where: { ma: Number(item.mabienthe) },
+          data: {
+            soluong: {
+              decrement: Number(item.soluong)
+            }
+          }
+        })
+      )
+    );
 
     // Create payment record if provided
     if (thanhToan) {
