@@ -270,30 +270,38 @@ async function createDonHang(data) {
       },
     });
 
-    // Create order items and update inventory
-    await prismaClient.chiTietDonHang.createMany({
-      data: chiTietDonHangs.map((item) => ({
-        soluong: Number(item.soluong),
-        dongia: item.dongia,
-        masp: Number(item.masp),
-        madh: donHang.ma,
-        mabienthe: Number(item.mabienthe),
-      })),
-    });
+    const operations = [];
 
-    // Update inventory (reduce stock)
-     await Promise.all(
-      chiTietDonHangs.map(item =>
-        prismaClient.bienThe.update({
-          where: { ma: Number(item.mabienthe) },
-          data: {
-            soluong: {
-              decrement: Number(item.soluong)
-            }
-          }
-        })
-      )
+    // Create order items
+    const chiTietData = chiTietDonHangs.map((item) => ({
+      soluong: Number(item.soluong),
+      dongia: item.dongia,
+      masp: Number(item.masp),
+      madh: donHang.ma,
+      mabienthe: Number(item.mabienthe),
+    }));
+    operations.push(prismaClient.chiTietDonHang.createMany({ data: chiTietData }));
+
+    // Update inventory - use single updateMany where possible
+    // Group by same quantity changes if needed, or use individual updates
+    const inventoryUpdates = chiTietDonHangs.map(item =>
+      prismaClient.bienThe.update({
+        where: { 
+          ma: Number(item.mabienthe),
+          soluong: { gte: Number(item.soluong) }
+        },
+        data: {
+          soluong: { decrement: Number(item.soluong) }
+        }
+      }).catch(e => {
+        console.error(`Không đủ số lượng cho biến thể ${item.mabienthe}`);
+        throw new ApiError(400, `Số lượng còn lại của sản phẩm không đủ`);
+      })
     );
+    operations.push(...inventoryUpdates);
+
+    // Execute order items creation and inventory updates in parallel
+    await Promise.all(operations);
 
     // Create payment record if provided
     if (thanhToan) {
@@ -395,6 +403,9 @@ async function createDonHang(data) {
         },
       },
     });
+  },{
+    timeout: 20000, 
+    maxWait: 15000,
   });
 }
 
