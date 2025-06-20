@@ -50,11 +50,12 @@ async function createKhuyenMai(req, res, next) {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { ten, loaikhuyenmai, giatrigiam, giatridonhang, ngaybatdat, ngayketthuc } = req.body;
+    const { ten, loaikhuyenmai, giatrigiam, giamtoida, giatridonhang, ngaybatdat, ngayketthuc } = req.body;
     const khuyenMai = await khuyenMaiService.createKhuyenMai({ 
       ten, 
       loaikhuyenmai, 
       giatrigiam, 
+      giamtoida,
       giatridonhang, 
       ngaybatdat, 
       ngayketthuc 
@@ -79,13 +80,14 @@ async function updateKhuyenMai(req, res, next) {
     }
 
     const { id } = req.params;
-    const { ten, loaikhuyenmai, giatrigiam, giatridonhang, ngaybatdat, ngayketthuc } = req.body;
+    const { ten, loaikhuyenmai, giatrigiam, giatridonhang, giamtoida, ngaybatdat, ngayketthuc } = req.body;
     
     const updatedKhuyenMai = await khuyenMaiService.updateKhuyenMai(id, { 
       ten, 
       loaikhuyenmai, 
       giatrigiam, 
       giatridonhang, 
+      giamtoida,
       ngaybatdat, 
       ngayketthuc 
     });

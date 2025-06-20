@@ -38,6 +38,11 @@ router.post(
       .withMessage('Giá trị đơn hàng tối thiểu không được để trống')
       .isFloat({ min: 0 })
       .withMessage('Giá trị đơn hàng tối thiểu phải là số dương'),
+    body('giamtoida')
+      .notEmpty()
+      .withMessage('Giá trị giảm tối đa không được để trống')
+      .isFloat({ min: 0 })
+      .withMessage('Giá trị giảm tối đa phải là số dương'),
     body('ngaybatdat')
       .notEmpty()
       .withMessage('Ngày bắt đầu không được để trống')
@@ -74,6 +79,10 @@ router.put(
       .optional()
       .isFloat({ min: 0 })
       .withMessage('Giá trị đơn hàng tối thiểu phải là số dương'),
+    body('giamtoida')
+      .optional()
+      .isFloat({ min: 0 })
+      .withMessage('Giá trị giảm tối đa phải là số dương'),
     body('ngaybatdat')
       .optional()
       .isISO8601()

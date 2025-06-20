@@ -77,7 +77,7 @@ async function getKhuyenMaiById(id) {
 
 // Create new promotion
 async function createKhuyenMai(data) {
-  const { ten, loaikhuyenmai, giatrigiam, giatridonhang, ngaybatdat, ngayketthuc } = data;
+  const { ten, loaikhuyenmai, giatrigiam, giatridonhang, giamtoida, ngaybatdat, ngayketthuc } = data;
   
   // Check if promotion with the same name exists
   const existingKhuyenMai = await prisma.khuyenMai.findFirst({
@@ -112,6 +112,7 @@ async function createKhuyenMai(data) {
       loaikhuyenmai,
       giatrigiam,
       giatridonhang,
+      giamtoida,
       ngaybatdat: startDate,
       ngayketthuc: endDate
     }
@@ -122,7 +123,7 @@ async function createKhuyenMai(data) {
 
 // Update promotion
 async function updateKhuyenMai(id, data) {
-  const { ten, loaikhuyenmai, giatrigiam, giatridonhang, ngaybatdat, ngayketthuc } = data;
+  const { ten, loaikhuyenmai, giatrigiam, giatridonhang, giamtoida, ngaybatdat, ngayketthuc } = data;
   
   // Check if promotion exists
   const existingKhuyenMai = await prisma.khuyenMai.findUnique({
@@ -183,6 +184,7 @@ async function updateKhuyenMai(id, data) {
       loaikhuyenmai,
       giatrigiam,
       giatridonhang,
+      giamtoida,
       ngaybatdat: ngaybatdat ? startDate : undefined,
       ngayketthuc: ngayketthuc ? endDate : undefined
     }

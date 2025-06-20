@@ -201,6 +201,7 @@ model KhuyenMai {
   loaikhuyenmai LoaiKhuyenMai
   giatrigiam    Float
   giatridonhang Float
+  giamtoida     Float
   ngaybatdat    DateTime
   ngayketthuc   DateTime
   DonHang       DonHang[]
