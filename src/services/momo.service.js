@@ -44,7 +44,7 @@ async function createMoMoPayment(madh, amount, orderInfo, returnUrl, ipnUrl) {
 }
 
 async function handleMoMoReturn(query) {
-    const orderId=Number(query.orderId.split("_")[0]);
+    const orderId=query.orderId.split("_")[0];
     const isSuccess = query.resultCode === '0';
     
     // Get order details
@@ -80,7 +80,7 @@ async function handleMoMoIPN(data) {
   
   // Process payment result
   return await prisma.$transaction(async (prismaClient) => {
-    const madh = parseInt(orderId);
+    const madh = orderId;
     const isSuccess = data.resultCode == 0; // 0 = success
     console.log(isSuccess)
     // Update payment status

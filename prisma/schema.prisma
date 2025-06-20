@@ -154,7 +154,7 @@ model HinhAnhMauSac {
 
 // DonHang
 model DonHang {
-  ma              Int              @id @default(autoincrement())
+  ma               String   @id @default(cuid())
   ngaydat         DateTime         @default(now())
   ten             String
   email           String?
@@ -186,7 +186,7 @@ model ChiTietDonHang {
   soluong   Int
   dongia    Decimal @db.Decimal(30, 3)
   masp      Int
-  madh      Int
+  madh      String
   mabienthe Int
 
   sanPham SanPham @relation(fields: [masp], references: [ma])
@@ -213,7 +213,7 @@ model ThanhToan {
   phuongthuc    String   @db.VarChar(100)
   ngaythanhtoan DateTime
   trangthai     Boolean
-  madh          Int @unique
+  madh          String @unique
 
   donHang DonHang @relation(fields: [madh], references: [ma],  onDelete: Cascade)
 }

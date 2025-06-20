@@ -100,7 +100,7 @@ async function getAllDonHang(page = 1, limit = 10, search = '', filters = {}) {
 // Get order wiht order item by ID
 async function getDonHangWithChiTietById(id) {
   const donHang = await prisma.donHang.findUnique({
-    where: { ma: Number(id) },
+    where: { ma: id },
     include: {
       nguoiDung: {
         select: {
@@ -142,7 +142,7 @@ async function getDonHangWithChiTietById(id) {
 // Get order by ID
 async function getDonHangById(id) {
   const donHang = await prisma.donHang.findUnique({
-    where: { ma: Number(id) },
+    where: { ma: id },
     include: {
       thanhToans: true,
     },
@@ -413,7 +413,7 @@ async function createDonHang(data) {
 async function updateDonHangStatus(id, trangthai, ngaygiao = null) {
   // Check if order exists
   const existingDonHang = await prisma.donHang.findUnique({
-    where: { ma: Number(id) },
+    where: { ma: id},
   });
 
   if (!existingDonHang) {
@@ -446,7 +446,7 @@ async function updateDonHangStatus(id, trangthai, ngaygiao = null) {
   }
   if (trangthai === 'da_giao_hang') {
     await prisma.thanhToan.update({
-      where: { madh: Number(id) },
+      where: { madh: id },
       data: {
         trangthai: true,
       },
@@ -454,7 +454,7 @@ async function updateDonHangStatus(id, trangthai, ngaygiao = null) {
   }
   // Update order
   const updatedDonHang = await prisma.donHang.update({
-    where: { ma: Number(id) },
+    where: { ma: id },
     data: updateData,
     include: {
       nguoiDung: {
@@ -495,7 +495,7 @@ async function updateDonHangStatus(id, trangthai, ngaygiao = null) {
 async function cancelDonHang(id) {
   // Check if order exists
   const existingDonHang = await prisma.donHang.findUnique({
-    where: { ma: Number(id) },
+    where: { ma: id },
     include: {
       chiTietDonHangs: {
         include: {
@@ -518,7 +518,7 @@ async function cancelDonHang(id) {
   return await prisma.$transaction(async (prismaClient) => {
     // Update order status and set cancellation date
     const updatedDonHang = await prismaClient.donHang.update({
-      where: { ma: Number(id) },
+      where: { ma: id },
       data: {
         ngayhuy: new Date(),
         trangthai: 'da_huy',
@@ -606,7 +606,7 @@ async function createThanhToan(data) {
 
   // Check if order exists
   const donHang = await prisma.donHang.findUnique({
-    where: { ma: Number(madh) },
+    where: { ma: madh },
   });
 
   if (!donHang) {
@@ -619,7 +619,7 @@ async function createThanhToan(data) {
       phuongthuc,
       ngaythanhtoan: new Date(),
       trangthai: Boolean(trangthai),
-      madh: Number(madh),
+      madh: madh,
     },
   });
 
