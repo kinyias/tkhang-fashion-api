@@ -205,78 +205,80 @@ async function createSanPham(data) {
   } = data;
 
   // Use transaction to create product, variants, and color images
-  const result = await prisma.$transaction(async (prismaClient) => {
-    // Create product
-    const sanPham = await prismaClient.sanPham.create({
-      data: {
-        ten,
-        mota,
-        giaban: typeof giaban === 'string' ? parseFloat(giaban) : giaban,
-        giagiam: giagiam
-          ? typeof giagiam === 'string'
-            ? parseFloat(giagiam)
-            : giagiam
-          : null,
-        hinhanh,
-        noibat: Boolean(noibat),
-        trangthai: trangthai !== undefined ? Boolean(trangthai) : true,
-        madanhmuc: Number(madanhmuc),
-        maloaisanpham: Number(maloaisanpham),
-        mathuonghieu: Number(mathuonghieu),
-      },
-    });
-
-    // Process colors and their images
-    if (mauSacs && mauSacs.length > 0) {
-      await prismaClient.hinhAnhMauSac.createMany({
-        data: mauSacs.map((item) => ({
-          hinhAnh: item.hinhAnh,
-          anhChinh: item.anhChinh || false,
-          mamausac: item.mamausac,
-          masp: sanPham.ma,
-        })),
-        skipDuplicates: true,
+  const result = await prisma.$transaction(
+    async (prismaClient) => {
+      // Create product
+      const sanPham = await prismaClient.sanPham.create({
+        data: {
+          ten,
+          mota,
+          giaban: typeof giaban === 'string' ? parseFloat(giaban) : giaban,
+          giagiam: giagiam
+            ? typeof giagiam === 'string'
+              ? parseFloat(giagiam)
+              : giagiam
+            : null,
+          hinhanh,
+          noibat: Boolean(noibat),
+          trangthai: trangthai !== undefined ? Boolean(trangthai) : true,
+          madanhmuc: Number(madanhmuc),
+          maloaisanpham: Number(maloaisanpham),
+          mathuonghieu: Number(mathuonghieu),
+        },
       });
-    }
 
-    // Create variants
-    if (bienThes && bienThes.length > 0) {
-      await prismaClient.bienThe.createMany({
-        data: bienThes.map((bienThe) => ({
-          gia:
-            typeof bienThe.gia === 'string'
-              ? parseFloat(bienThe.gia)
-              : bienThe.gia,
-          soluong: Number(bienThe.soluong),
-          masp: sanPham.ma,
-          mamausac: Number(bienThe.mamausac),
-          makichco: Number(bienThe.makichco),
-        })),
-        skipDuplicates: true,
-      });
-    }
+      // Process colors and their images
+      if (mauSacs && mauSacs.length > 0) {
+        await prismaClient.hinhAnhMauSac.createMany({
+          data: mauSacs.map((item) => ({
+            hinhAnh: item.hinhAnh,
+            anhChinh: item.anhChinh || false,
+            mamausac: item.mamausac,
+            masp: sanPham.ma,
+          })),
+          skipDuplicates: true,
+        });
+      }
 
-    // Return created product with relationships
-    return await prismaClient.sanPham.findUnique({
-      where: { ma: sanPham.ma },
-      include: {
-        danhMuc: true,
-        loaiSanPham: true,
-        thuongHieu: true,
-        bienThes: {
-          include: {
-            mauSac: true,
-            kichCo: true,
+      // Create variants
+      if (bienThes && bienThes.length > 0) {
+        await prismaClient.bienThe.createMany({
+          data: bienThes.map((bienThe) => ({
+            gia:
+              typeof bienThe.gia === 'string'
+                ? parseFloat(bienThe.gia)
+                : bienThe.gia,
+            soluong: Number(bienThe.soluong),
+            masp: sanPham.ma,
+            mamausac: Number(bienThe.mamausac),
+            makichco: Number(bienThe.makichco),
+          })),
+          skipDuplicates: true,
+        });
+      }
+
+      // Return created product with relationships
+      return await prismaClient.sanPham.findUnique({
+        where: { ma: sanPham.ma },
+        include: {
+          danhMuc: true,
+          loaiSanPham: true,
+          thuongHieu: true,
+          bienThes: {
+            include: {
+              mauSac: true,
+              kichCo: true,
+            },
           },
         },
-      },
-    });
-  },
-  {
-    maxWait: 10000, // Maximum time to wait for a transaction slot (10s)
-    timeout: 20000, // Maximum time the transaction can run (20s)
-    isolationLevel: 'ReadCommitted', // Use a more permissive isolation level
-  });
+      });
+    },
+    {
+      maxWait: 10000, // Maximum time to wait for a transaction slot (10s)
+      timeout: 20000, // Maximum time the transaction can run (20s)
+      isolationLevel: 'ReadCommitted', // Use a more permissive isolation level
+    }
+  );
 
   // Index the new product in Elasticsearch (don't block the response)
   try {
@@ -307,170 +309,183 @@ async function updateSanPham(id, data) {
   } = data;
 
   // Use transaction to update product, variants, and color images
-  const result = await prisma.$transaction(async (prismaClient) => {
-    // Update product
-    const updatedSanPham = await prismaClient.sanPham.update({
-      where: { ma: Number(id) },
-      data: {
-        ten,
-        mota,
-        giaban: giaban
-          ? typeof giaban === 'string'
-            ? parseFloat(giaban)
-            : giaban
-          : undefined,
-        giagiam: giagiam
-          ? typeof giagiam === 'string'
-            ? parseFloat(giagiam)
-            : giagiam
-          : null,
-        hinhanh,
-        noibat: noibat !== undefined ? Boolean(noibat) : undefined,
-        trangthai: trangthai !== undefined ? Boolean(trangthai) : undefined,
-        madanhmuc: madanhmuc ? Number(madanhmuc) : undefined,
-        maloaisanpham: maloaisanpham ? Number(maloaisanpham) : undefined,
-        mathuonghieu: mathuonghieu ? Number(mathuonghieu) : undefined,
-      },
-      include: {
-        danhMuc: true,
-        loaiSanPham: true,
-        thuongHieu: true,
-        bienThes: {
-          include: {
-            mauSac: true,
-            kichCo: true,
-          },
+  const result = await prisma.$transaction(
+    async (prismaClient) => {
+      // Update product
+      const updatedSanPham = await prismaClient.sanPham.update({
+        where: { ma: Number(id) },
+        data: {
+          ten,
+          mota,
+          giaban: giaban
+            ? typeof giaban === 'string'
+              ? parseFloat(giaban)
+              : giaban
+            : undefined,
+          giagiam: giagiam
+            ? typeof giagiam === 'string'
+              ? parseFloat(giagiam)
+              : giagiam
+            : null,
+          hinhanh,
+          noibat: noibat !== undefined ? Boolean(noibat) : undefined,
+          trangthai: trangthai !== undefined ? Boolean(trangthai) : undefined,
+          madanhmuc: madanhmuc ? Number(madanhmuc) : undefined,
+          maloaisanpham: maloaisanpham ? Number(maloaisanpham) : undefined,
+          mathuonghieu: mathuonghieu ? Number(mathuonghieu) : undefined,
         },
-        hinhAnhMauSacs: {
-          include: {
-            mauSac: true,
-          },
-        },
-      },
-    });
-
-    // Update variants if provided
-    if (bienThes && Array.isArray(bienThes) && bienThes.length > 0) {
-      // Get existing variants
-      const existingBienThes = await prismaClient.bienThe.findMany({
-        where: { masp: Number(id) },
-        select: { ma: true },
-      });
-
-      // Identify variants to update, create, or delete
-      const existingBienTheIds = existingBienThes.map((bt) => bt.ma);
-      const incomingBienTheIds = bienThes
-        .filter((bt) => bt.ma && bt.ma !== 0)
-        .map((bt) => Number(bt.ma));
-
-      // Variants to delete (exist in DB but not in incoming data)
-      const bienTheIdsToDelete = existingBienTheIds.filter(
-        (btId) => !incomingBienTheIds.includes(btId)
-      );
-
-      // Delete variants that are no longer needed
-      if (bienTheIdsToDelete.length > 0) {
-        await prismaClient.bienThe.deleteMany({
-          where: {
-            ma: {
-              in: bienTheIdsToDelete,
+        include: {
+          danhMuc: true,
+          loaiSanPham: true,
+          thuongHieu: true,
+          bienThes: {
+            include: {
+              mauSac: true,
+              kichCo: true,
             },
           },
-        });
-      }
-      const bienThesToUpdate = bienThes.filter(bt => bt.ma && bt.ma !== 0);
-      const bienThesToCreate = bienThes.filter(bt => !bt.ma || bt.ma === 0);
-      
-      const updatePromises = bienThesToUpdate.map(bienThe =>
-        prismaClient.bienThe.update({
-          where: { ma: Number(bienThe.ma) },
-          data: {
-            gia: typeof bienThe.gia === 'string' ? parseFloat(bienThe.gia) : bienThe.gia,
-            soluong: Number(bienThe.soluong),
-            mamausac: Number(bienThe.mamausac),
-            makichco: Number(bienThe.makichco),
-          },
-        })
-      );
-      const createData = bienThesToCreate.map(bienThe => ({
-        gia: typeof bienThe.gia === 'string' ? parseFloat(bienThe.gia) : bienThe.gia,
-        soluong: Number(bienThe.soluong),
-        masp: updatedSanPham.ma,
-        mamausac: Number(bienThe.mamausac),
-        makichco: Number(bienThe.makichco),
-      }));
-
-      // Execute all variant updates concurrently
-      await Promise.all([
-        ...updatePromises,
-        ...(createData.length > 0 ? [prismaClient.bienThe.createMany({ data: createData })] : [])
-      ]);
-    }
-
-    // Update color images if provided
-    if (mauSacs && mauSacs.length > 0) {
-      const existingMauSacs = await prismaClient.hinhAnhMauSac.findMany({
-        where: { masp: Number(id) },
-        select: { ma: true },
-      });
-      // Identify to update, create, or delete
-      const existingMauSacIds = existingMauSacs.map((bt) => bt.ma);
-      const incomingMauSacIds = mauSacs
-        .filter((bt) => bt.ma && bt.ma !== 0)
-        .map((bt) => Number(bt.ma));
-
-      // To delete (exist in DB but not in incoming data)
-      const mauSacIdsToDelete = existingMauSacIds.filter(
-        (btId) => !incomingMauSacIds.includes(btId)
-      );
-      // Delete variants that are no longer needed
-      if (mauSacIdsToDelete.length > 0) {
-        await prismaClient.hinhAnhMauSac.deleteMany({
-          where: {
-            ma: {
-              in: mauSacIdsToDelete,
+          hinhAnhMauSacs: {
+            include: {
+              mauSac: true,
             },
           },
+        },
+      });
+
+      // Update variants if provided
+      if (bienThes && Array.isArray(bienThes) && bienThes.length > 0) {
+        // Get existing variants
+        const existingBienThes = await prismaClient.bienThe.findMany({
+          where: { masp: Number(id) },
+          select: { ma: true },
         });
+
+        // Identify variants to update, create, or delete
+        const existingBienTheIds = existingBienThes.map((bt) => bt.ma);
+        const incomingBienTheIds = bienThes
+          .filter((bt) => bt.ma && bt.ma !== 0)
+          .map((bt) => Number(bt.ma));
+
+        // Variants to delete (exist in DB but not in incoming data)
+        const bienTheIdsToDelete = existingBienTheIds.filter(
+          (btId) => !incomingBienTheIds.includes(btId)
+        );
+
+        // Delete variants that are no longer needed
+        if (bienTheIdsToDelete.length > 0) {
+          await prismaClient.bienThe.deleteMany({
+            where: {
+              ma: {
+                in: bienTheIdsToDelete,
+              },
+            },
+          });
+        }
+        const bienThesToUpdate = bienThes.filter((bt) => bt.ma && bt.ma !== 0);
+        const bienThesToCreate = bienThes.filter((bt) => !bt.ma || bt.ma === 0);
+
+        const updatePromises = bienThesToUpdate.map((bienThe) =>
+          prismaClient.bienThe.update({
+            where: { ma: Number(bienThe.ma) },
+            data: {
+              gia:
+                typeof bienThe.gia === 'string'
+                  ? parseFloat(bienThe.gia)
+                  : bienThe.gia,
+              soluong: Number(bienThe.soluong),
+              mamausac: Number(bienThe.mamausac),
+              makichco: Number(bienThe.makichco),
+            },
+          })
+        );
+        const createData = bienThesToCreate.map((bienThe) => ({
+          gia:
+            typeof bienThe.gia === 'string'
+              ? parseFloat(bienThe.gia)
+              : bienThe.gia,
+          soluong: Number(bienThe.soluong),
+          masp: updatedSanPham.ma,
+          mamausac: Number(bienThe.mamausac),
+          makichco: Number(bienThe.makichco),
+        }));
+
+        // Execute all variant updates concurrently
+        await Promise.all([
+          ...updatePromises,
+          ...(createData.length > 0
+            ? [prismaClient.bienThe.createMany({ data: createData })]
+            : []),
+        ]);
       }
-      // Separate updates and creates
-      const mauSacsToUpdate = mauSacs.filter(ms => ms.ma && ms.ma !== 0);
-      const mauSacsToCreate = mauSacs.filter(ms => !ms.ma || ms.ma === 0);
 
-      // Batch update existing color images
-      const updatePromises = mauSacsToUpdate.map(mauSac =>
-        prismaClient.hinhAnhMauSac.update({
-          where: { ma: Number(mauSac.ma) },
-          data: {
-            hinhAnh: mauSac.hinhAnh,
-            anhChinh: mauSac.anhChinh || false,
-            mamausac: mauSac.mamausac,
-            masp: updatedSanPham.ma,
-          },
-        })
-      );
+      // Update color images if provided
+      if (mauSacs && mauSacs.length > 0) {
+        const existingMauSacs = await prismaClient.hinhAnhMauSac.findMany({
+          where: { masp: Number(id) },
+          select: { ma: true },
+        });
+        // Identify to update, create, or delete
+        const existingMauSacIds = existingMauSacs.map((bt) => bt.ma);
+        const incomingMauSacIds = mauSacs
+          .filter((bt) => bt.ma && bt.ma !== 0)
+          .map((bt) => Number(bt.ma));
 
-      // Batch create new color images
-      const createData = mauSacsToCreate.map(mauSac => ({
-        hinhAnh: mauSac.hinhAnh,
-        anhChinh: mauSac.anhChinh || false,
-        mamausac: mauSac.mamausac,
-        masp: updatedSanPham.ma,
-      }));
+        // To delete (exist in DB but not in incoming data)
+        const mauSacIdsToDelete = existingMauSacIds.filter(
+          (btId) => !incomingMauSacIds.includes(btId)
+        );
+        // Delete variants that are no longer needed
+        if (mauSacIdsToDelete.length > 0) {
+          await prismaClient.hinhAnhMauSac.deleteMany({
+            where: {
+              ma: {
+                in: mauSacIdsToDelete,
+              },
+            },
+          });
+        }
+        // Separate updates and creates
+        const mauSacsToUpdate = mauSacs.filter((ms) => ms.ma && ms.ma !== 0);
+        const mauSacsToCreate = mauSacs.filter((ms) => !ms.ma || ms.ma === 0);
 
-      // Execute all color image updates concurrently
-      await Promise.all([
-        ...updatePromises,
-        ...(createData.length > 0 ? [prismaClient.hinhAnhMauSac.createMany({ data: createData })] : [])
-      ]);
+        // Batch update existing color images
+        const updatePromises = mauSacsToUpdate.map((mauSac) =>
+          prismaClient.hinhAnhMauSac.update({
+            where: { ma: Number(mauSac.ma) },
+            data: {
+              hinhAnh: mauSac.hinhAnh,
+              anhChinh: mauSac.anhChinh || false,
+              mamausac: mauSac.mamausac,
+              masp: updatedSanPham.ma,
+            },
+          })
+        );
+
+        // Batch create new color images
+        const createData = mauSacsToCreate.map((mauSac) => ({
+          hinhAnh: mauSac.hinhAnh,
+          anhChinh: mauSac.anhChinh || false,
+          mamausac: mauSac.mamausac,
+          masp: updatedSanPham.ma,
+        }));
+
+        // Execute all color image updates concurrently
+        await Promise.all([
+          ...updatePromises,
+          ...(createData.length > 0
+            ? [prismaClient.hinhAnhMauSac.createMany({ data: createData })]
+            : []),
+        ]);
+      }
+
+      return updatedSanPham;
+    },
+    {
+      maxWait: 10000, // Maximum time to wait for a transaction slot (10s)
+      timeout: 20000, // Maximum time the transaction can run (20s)
+      isolationLevel: 'ReadCommitted', // Use a more permissive isolation level
     }
-
-    return updatedSanPham;
-  }, {
-    maxWait: 10000, // Maximum time to wait for a transaction slot (10s)
-    timeout: 20000, // Maximum time the transaction can run (20s)
-    isolationLevel: 'ReadCommitted', // Use a more permissive isolation level
-  });
+  );
 
   // Prepare data for Elasticsearch update
   const elasticsearchData = {

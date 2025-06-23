@@ -1,6 +1,6 @@
 const prisma = require('../lib/prisma');
 const ApiError = require('../lib/ApiError');
-const { createMoMoPayment } = require('./momo.service');
+const { createMoMoPayment, refundMoMo } = require('./momo.service');
 
 // Get all orders with pagination and filtering
 async function getAllDonHang(page = 1, limit = 10, search = '', filters = {}) {
@@ -310,7 +310,7 @@ async function createDonHang(data) {
           // Create MoMo payment
           const orderInfo = `Thanh toán đơn hàng ${donHang.ma}`;
           const momoResponse = await createMoMoPayment(
-            donHang.ma.toString(),
+            donHang.ma,
             tonggia,
             orderInfo,
             returnUrl,
@@ -410,7 +410,7 @@ async function createDonHang(data) {
 }
 
 // Update order status
-async function updateDonHangStatus(id, trangthai, ngaygiao = null) {
+async function updateDonHangStatus(id, trangthai, ngaygiao = null, mavandon = null) {
   // Check if order exists
   const existingDonHang = await prisma.donHang.findUnique({
     where: { ma: id},
@@ -440,7 +440,9 @@ async function updateDonHangStatus(id, trangthai, ngaygiao = null) {
 
   // Update data based on status
   const updateData = { trangthai };
-
+  if(mavandon){
+    updateData.mavandon = mavandon;
+  }
   if (trangthai === 'dang_giao_hang' && !existingDonHang.ngaygiao) {
     updateData.ngaygiao = ngaygiao ? new Date(ngaygiao) : new Date();
   }
@@ -492,7 +494,7 @@ async function updateDonHangStatus(id, trangthai, ngaygiao = null) {
 }
 
 // Cancel order with transaction
-async function cancelDonHang(id) {
+async function cancelDonHang(id, lydo) {
   // Check if order exists
   const existingDonHang = await prisma.donHang.findUnique({
     where: { ma: id },
@@ -502,6 +504,7 @@ async function cancelDonHang(id) {
           bienThe: true,
         },
       },
+      thanhToans: true,
     },
   });
 
@@ -520,6 +523,7 @@ async function cancelDonHang(id) {
     const updatedDonHang = await prismaClient.donHang.update({
       where: { ma: id },
       data: {
+        lydo,
         ngayhuy: new Date(),
         trangthai: 'da_huy',
       },
@@ -536,41 +540,52 @@ async function cancelDonHang(id) {
         },
       });
     }
-
-    // Return updated order
-    return await prismaClient.donHang.findUnique({
-      where: { ma: updatedDonHang.ma },
-      include: {
-        nguoiDung: {
-          select: {
-            ma: true,
-            ho: true,
-            ten: true,
-            email: true,
-            so_dien_thoai: true,
-          },
-        },
-        khuyenMai: true,
-        chiTietDonHangs: {
-          include: {
-            sanPham: {
-              select: {
-                ma: true,
-                ten: true,
-                hinhanh: true,
-              },
-            },
-            bienThe: {
-              include: {
-                mauSac: true,
-                kichCo: true,
-              },
-            },
-          },
-        },
-        thanhToans: true,
-      },
+    // Refund MoMo
+    if(existingDonHang.thanhToans.phuongthuc === 'momo' && existingDonHang.thanhToans.trangthai && existingDonHang.thanhToans.transId){
+    const refundResult = await refundMoMo({
+      orderId: id,
+      amount: existingDonHang.tonggia,
+      transId: existingDonHang.thanhToans[0].transId,
+      description: 'Hoàn tiền đơn hàng',
     });
+    return {...refundResult, trangthai: updatedDonHang.trangthai};
+  }else{
+    return {...updatedDonHang, trangthai: updatedDonHang.trangthai};
+  }
+    // // Return updated order
+    // return await prismaClient.donHang.findUnique({
+    //   where: { ma: updatedDonHang.ma },
+    //   include: {
+    //     nguoiDung: {
+    //       select: {
+    //         ma: true,
+    //         ho: true,
+    //         ten: true,
+    //         email: true,
+    //         so_dien_thoai: true,
+    //       },
+    //     },
+    //     khuyenMai: true,
+    //     chiTietDonHangs: {
+    //       include: {
+    //         sanPham: {
+    //           select: {
+    //             ma: true,
+    //             ten: true,
+    //             hinhanh: true,
+    //           },
+    //         },
+    //         bienThe: {
+    //           include: {
+    //             mauSac: true,
+    //             kichCo: true,
+    //           },
+    //         },
+    //       },
+    //     },
+    //     thanhToans: true,
+    //   },
+    // });
   });
 }
 

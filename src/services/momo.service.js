@@ -93,6 +93,7 @@ async function handleMoMoIPN(data) {
       data: {
         trangthai: isSuccess,
         ngaythanhtoan: new Date(),
+        transId: data.transId.toString(),
         // momoTransId: data.transId,
         // momoResponseTime: new Date(data.responseTime)
       }

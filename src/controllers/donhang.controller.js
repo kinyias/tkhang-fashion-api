@@ -1,6 +1,6 @@
 const { validationResult } = require('express-validator');
 const donHangService = require('../services/donhang.service');
-const { handleMoMoReturn, handleMoMoIPN } = require('../services/momo.service');
+const { handleMoMoReturn, handleMoMoIPN, refundMoMo } = require('../services/momo.service');
 const emailService = require('../services/email.service');
 // Get all orders with pagination and filtering
 async function getAllDonHang(req, res, next) {
@@ -132,7 +132,6 @@ async function momoReturnHandler(req, res, next) {
 // MoMo IPN Handler
 async function momoIPNHandler(req, res, next) {
   try {
-    console.log('req.body', req.body);
     await handleMoMoIPN(req.body);
     // MoMo expects a 200 status code for successful IPN processing
     return res.status(200).json({ success: true });
@@ -140,6 +139,15 @@ async function momoIPNHandler(req, res, next) {
     console.error('IPN Error:', error);
     // Still return 200 to prevent MoMo from retrying
     return res.status(200).json({ success: false });
+  }
+}
+// MoMo Refund Handler
+async function momoRefundHandler(req, res, next) {
+  try {
+    const result = await refundMoMo(req.body);
+    return res.status(200).json(result);
+  } catch (error) {
+    next(error);
   }
 }
 // Update order status
@@ -152,12 +160,13 @@ async function updateDonHangStatus(req, res, next) {
     }
 
     const { id } = req.params;
-    const { trangthai, ngaygiao } = req.body;
+    const { trangthai, ngaygiao, mavandon } = req.body;
 
     const updatedDonHang = await donHangService.updateDonHangStatus(
       id,
       trangthai,
-      ngaygiao
+      ngaygiao,
+      mavandon
     );
 
     return res.status(200).json({
@@ -173,7 +182,7 @@ async function updateDonHangStatus(req, res, next) {
 async function cancelDonHang(req, res, next) {
   try {
     const { id } = req.params;
-
+    const { lydo } = req.body;
     // Check if user is admin or the order belongs to the user
     if (req.user.vai_tro !== 'admin') {
       const donHang = await donHangService.getDonHangById(id);
@@ -184,7 +193,7 @@ async function cancelDonHang(req, res, next) {
       }
     }
 
-    const result = await donHangService.cancelDonHang(id);
+    const result = await donHangService.cancelDonHang(id, lydo);
 
     return res.status(200).json({
       message: 'Hủy đơn hàng thành công',
@@ -260,4 +269,5 @@ module.exports = {
   createThanhToan,
   momoReturnHandler,
   momoIPNHandler,
+  momoRefundHandler
 };

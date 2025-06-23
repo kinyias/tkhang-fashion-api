@@ -172,6 +172,8 @@ model DonHang {
   phuongthucgiaohang String
   phigiaohang     Decimal @db.Decimal(30, 3)
   ghichu          String?
+  lydo            String?
+  mavandon         String?
   manguoidung     Int?
   maKhuyenMai     Int?
   khuyenMai       KhuyenMai?       @relation(fields: [maKhuyenMai], references: [ma])
@@ -213,6 +215,7 @@ model ThanhToan {
   phuongthuc    String   @db.VarChar(100)
   ngaythanhtoan DateTime
   trangthai     Boolean
+  transId       String?
   madh          String @unique
 
   donHang DonHang @relation(fields: [madh], references: [ma],  onDelete: Cascade)
@@ -274,6 +277,7 @@ enum TrangThaiDonHang {
   da_huy
   dang_giao_hang
   da_giao_hang
+  giao_hang_that_bai
 }
 
 enum LoaiKhuyenMai {

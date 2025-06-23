@@ -84,7 +84,7 @@ router.patch(
   authenticate,
   authorize(['admin']),
   [
-    param('id').isInt().withMessage('ID đơn hàng phải là số nguyên'),
+    param('id').notEmpty().withMessage('ID đơn hàng không được để trống'),
     body('trangthai').isIn(['da_dat', 'dang_xu_ly', 'dang_giao_hang', 'da_giao_hang', 'da_huy']).withMessage('Trạng thái không hợp lệ')
   ],
   donHangController.updateDonHangStatus
@@ -108,11 +108,12 @@ router.post(
   authenticate,
   [
     param('id').isInt().withMessage('ID đơn hàng phải là số nguyên'),
-    body('reason').optional().isString().withMessage('Lý do hủy phải là chuỗi')
+    body('lydo').optional().isString().withMessage('Lý do hủy phải là chuỗi')
   ],
   donHangController.cancelDonHang
 );
 // MoMo callback URLs
 router.get('/payment/momo/return', donHangController.momoReturnHandler);
 router.post('/payment/momo/ipn', express.json(), donHangController.momoIPNHandler);
+router.post('/payment/momo/refund', donHangController.momoRefundHandler);
 module.exports = router;

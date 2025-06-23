@@ -111,7 +111,7 @@ async function createUser(data) {
       so_dien_thoai,
       vai_tro,
       mat_khau: hashedPassword,
-      xac_thuc_email: false,
+      xac_thuc_email: true,
     },
     select: {
       ma: true,
