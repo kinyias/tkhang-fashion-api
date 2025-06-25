@@ -116,4 +116,7 @@ router.post(
 router.get('/payment/momo/return', donHangController.momoReturnHandler);
 router.post('/payment/momo/ipn', express.json(), donHangController.momoIPNHandler);
 router.post('/payment/momo/refund', donHangController.momoRefundHandler);
+// VNPay callback URLs
+router.get('/payment/vnpay/return', donHangController.vnpayReturnHandler);
+router.post('/payment/vnpay/ipn', express.json(), donHangController.vnpayIPNHandler);
 module.exports = router;

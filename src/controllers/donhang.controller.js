@@ -2,6 +2,7 @@ const { validationResult } = require('express-validator');
 const donHangService = require('../services/donhang.service');
 const { handleMoMoReturn, handleMoMoIPN, refundMoMo } = require('../services/momo.service');
 const emailService = require('../services/email.service');
+const { handleVnPayReturn, refundVnPay } = require('../services/vnpay.service');
 // Get all orders with pagination and filtering
 async function getAllDonHang(req, res, next) {
   try {
@@ -88,7 +89,7 @@ async function createDonHang(req, res, next) {
       ipnUrl: `${process.env.API_BASE_URL}/api/donhang/payment/momo/ipn`, // Dynamic IPN URL
     };
 
-    const donHang = await donHangService.createDonHang(orderData);
+    const donHang = await donHangService.createDonHang(orderData,req);
     await emailService.sendNewOrderNotificationToAdmin(donHang);
     // If MoMo payment, return payment URL
     if (req.body.paymentMethod === 'momo' && donHang.paymentUrl) {
@@ -100,6 +101,14 @@ async function createDonHang(req, res, next) {
         donHang,
         paymentUrl: donHang.paymentUrl,
         paymentMethod: 'momo',
+      });
+    }
+    if(req.body.paymentMethod === 'vnpay' && donHang.paymentUrl) {
+      return res.status(201).json({
+        message: 'Tạo đơn hàng thành công. Vui lòng thanh toán qua VNPay',
+        donHang,
+        paymentUrl: donHang.paymentUrl,
+        paymentMethod: 'vnpay',
       });
     }
     if (orderData.email && orderData.email !== '') {
@@ -184,15 +193,36 @@ async function cancelDonHang(req, res, next) {
     const { id } = req.params;
     const { lydo } = req.body;
     // Check if user is admin or the order belongs to the user
+    const donHang = await donHangService.getDonHangById(id);
     if (req.user.vai_tro !== 'admin') {
-      const donHang = await donHangService.getDonHangById(id);
       if (donHang.manguoidung !== req.user.ma) {
         return res
           .status(403)
           .json({ message: 'Không có quyền hủy đơn hàng này' });
       }
     }
-
+    if(donHang.thanhToans.phuongthuc === 'momo' && donHang.thanhToans.trangthai && donHang.thanhToans.transId){
+      const refundResult = await refundMoMo({
+        orderId: id,
+        amount: donHang.tonggia,
+        transId: donHang.thanhToans.transId,
+        description: 'Hoàn tiền đơn hàng',
+      });
+      if(!refundResult.success){
+        return res.status(400).json({
+          message: 'Hoàn tiền thất bại',
+          donHang: refundResult,
+        });
+      }
+    } else if(donHang.thanhToans.phuongthuc === 'vnpay' && donHang.thanhToans.trangthai && donHang.thanhToans.transId){
+      const refundResult = await refundVnPay(req, donHang.tonggia);
+      if(!refundResult.success){
+        return res.status(400).json({
+          message: `Hoàn tiền thất bại! ${refundResult.message}` || 'Hoàn tiền thất bại',
+          donHang: refundResult.data,
+        });
+      }
+    }
     const result = await donHangService.cancelDonHang(id, lydo);
 
     return res.status(200).json({
@@ -255,7 +285,35 @@ async function createThanhToan(req, res, next) {
     next(error);
   }
 }
-
+async function vnpayReturnHandler(req, res, next) {
+  try {
+    const result = await handleVnPayReturn(req);
+    if(result.success){
+    return res.redirect(
+      `${process.env.CLIENT_BASE_URL}/thanh-toan/xac-nhan/${
+        result.data.orderId
+      }?payment_status=${result.success ? 'success' : 'failed'}`
+    );
+  }
+  else{
+    return res.redirect(
+      `${process.env.CLIENT_BASE_URL}/thanh-toan/that-bai/${
+        result.data.orderId
+      }?payment_status=${result.success ? 'success' : 'failed'}`
+    );
+  }
+  } catch (error) {
+    next(error);
+  }
+}
+async function vnpayIPNHandler(req, res, next) {
+  try {
+    const response = await handleVnPayIPN(req);
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    next(error);
+  }
+}
 module.exports = {
   getAllDonHang,
   getDonHangWithChiTietById,
@@ -269,5 +327,7 @@ module.exports = {
   createThanhToan,
   momoReturnHandler,
   momoIPNHandler,
-  momoRefundHandler
+  momoRefundHandler,
+  vnpayReturnHandler,
+  vnpayIPNHandler
 };

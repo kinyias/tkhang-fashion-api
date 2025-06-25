@@ -8,6 +8,7 @@ const momoConfig = {
     accessKey: process.env.MOMO_ACCESS_KEY || "F8BBA842ECF85", // Test credentials
     secretKey: process.env.MOMO_SECRET_KEY || "K951B6PE1waDMi640xX08PD3vg6EkVlz", // Test credentials
     endpoint: process.env.MOMO_ENDPOINT || "https://test-payment.momo.vn/v2/gateway/api/create",
+    refundEndpoint: process.env.MOMO_REFUND_ENDPOINT || "https://test-payment.momo.vn/v2/gateway/api/refund",
     requestType: "payWithMethod"
 };
 
@@ -110,9 +111,107 @@ async function handleMoMoIPN(data) {
     return { success: true };
   });
 }
+async function refundMoMo(data) {
+  try {
+    const orderId = data.orderId;
+    const amount = data.amount;
+    const transId = data.transId;
+    const description = data.description;
+    if (!orderId || !transId || !amount) {
+      return res.status(400).json({
+        success: false,
+        message: 'Thiếu thông tin bắt buộc: orderId, transId, amount',
+      });
+    }
+    // Tạo requestId unique
+    const requestId = `REFUND_${Date.now()}_${Math.random()
+      .toString(36)
+      .substr(2, 9)}`;
 
+    // Tạo raw signature string
+    const rawSignature = `accessKey=${momoConfig.accessKey}&amount=${amount}&description=${description}&orderId=${orderId}&partnerCode=${momoConfig.partnerCode}&requestId=${requestId}&transId=${transId}`;
+    // Tạo chữ ký
+    const signature = crypto
+      .createHmac('sha256', momoConfig.secretKey)
+      .update(rawSignature)
+      .digest('hex');
+    // Payload gửi đến MoMo
+    const requestBody = {
+      partnerCode: momoConfig.partnerCode,
+      accessKey: momoConfig.accessKey,
+      requestId: requestId,
+      amount: amount,
+      orderId: orderId,
+      transId: transId,
+      lang: 'vi',
+      description: description || 'Hoàn tiền đơn hàng',
+      signature: signature,
+    };
+    // Gửi request đến MoMo
+    const response = await axios.post(momoConfig.refundEndpoint, requestBody, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      timeout: 30000, // 30 seconds timeout
+    });
+    console.log('=== MoMo Refund Response ===');
+    console.log('Response:', JSON.stringify(response.data, null, 2));
+
+    const result = response.data;
+    // Xử lý response từ MoMo
+    if (result.resultCode === 0) {
+      // Hoàn tiền thành công
+      return {
+        success: true,
+        message: 'Hoàn tiền thành công',
+        data: {
+          requestId: result.requestId,
+          orderId: result.orderId,
+          transId: result.transId,
+          amount: result.amount,
+          resultCode: result.resultCode,
+          message: result.message,
+        },
+      };
+    } else {
+      // Hoàn tiền thất bại
+      return {
+        success: false,
+        message: result.message || 'Hoàn tiền thất bại',
+        errorCode: result.resultCode,
+        data: result,
+      };
+    }
+  } catch (error) {
+    console.error('Lỗi khi hoàn tiền MoMo:', error);
+
+    if (error.response) {
+      // Lỗi từ MoMo API
+      return {
+        success: false,
+        message: 'Lỗi từ MoMo API',
+        error: error.response.data,
+      };
+    } else if (error.request) {
+      // Lỗi network
+      return {
+        success: false,
+        message: 'Không thể kết nối đến MoMo',
+        error: 'Network error',
+      };
+    } else {
+      // Lỗi khác
+      return {
+        success: false,
+        message: 'Lỗi hệ thống',
+        error: error.message,
+      };
+    }
+  }
+}
 module.exports = {
   createMoMoPayment,
   handleMoMoReturn,
-  handleMoMoIPN
+  handleMoMoIPN,
+  refundMoMo
 };

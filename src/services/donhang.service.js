@@ -1,7 +1,7 @@
 const prisma = require('../lib/prisma');
 const ApiError = require('../lib/ApiError');
 const { createMoMoPayment, refundMoMo } = require('./momo.service');
-
+const { createVnPayPayment } = require('./vnpay.service');
 // Get all orders with pagination and filtering
 async function getAllDonHang(page = 1, limit = 10, search = '', filters = {}) {
   const skip = (page - 1) * limit;
@@ -214,7 +214,7 @@ async function getDonHangByUserId(userId, page = 1, limit = 10, trangthai) {
 }
 
 // Create new order with transaction
-async function createDonHang(data) {
+async function createDonHang(data, req) {
   const {
     ten,
     email,
@@ -364,7 +364,54 @@ async function createDonHang(data) {
           console.error('MoMo payment error:', error);
           throw new ApiError(500, 'Lỗi khi tạo thanh toán MoMo');
         }
-      } else {
+      }
+      else if(thanhToan.phuongthuc === 'vnpay') {
+        try {
+          // Create VNPay payment
+          const vnpayResponse = await createVnPayPayment(donHang.ma, tonggia, req);
+          await prismaClient.thanhToan.create({
+            data: {
+              phuongthuc: 'vnpay',
+              ngaythanhtoan: new Date(),
+              trangthai: false, // false = pending
+              madh: donHang.ma,
+            },
+          });
+          const result = await prismaClient.donHang.findUnique({
+            where: { ma: donHang.ma },
+            include: {
+              nguoiDung: {
+                select: {
+                  ma: true,
+                  ho: true,
+                  ten: true,
+                  email: true,
+                  so_dien_thoai: true,
+                },
+              },
+              chiTietDonHangs: {
+                include: {
+                  sanPham: {
+                    select: {
+                      ma: true,
+                      ten: true,
+                      hinhanh: true,
+                    },
+                  },
+                },
+              },
+            },
+          });
+          return {
+            ...result,
+            paymentUrl: vnpayResponse.vnpUrl,
+          };
+        } catch (error) {
+          console.error('VNPay payment error:', error);
+          throw new ApiError(500, 'Lỗi khi tạo thanh toán VNPay');
+        }
+      }
+      else {
         // Handle other payment methods (COD, etc.)
         await prismaClient.thanhToan.create({
           data: {
@@ -541,17 +588,21 @@ async function cancelDonHang(id, lydo) {
       });
     }
     // Refund MoMo
-    if(existingDonHang.thanhToans.phuongthuc === 'momo' && existingDonHang.thanhToans.trangthai && existingDonHang.thanhToans.transId){
-    const refundResult = await refundMoMo({
-      orderId: id,
-      amount: existingDonHang.tonggia,
-      transId: existingDonHang.thanhToans[0].transId,
-      description: 'Hoàn tiền đơn hàng',
-    });
-    return {...refundResult, trangthai: updatedDonHang.trangthai};
-  }else{
+  //   if(existingDonHang.thanhToans.phuongthuc === 'momo' && existingDonHang.thanhToans.trangthai && existingDonHang.thanhToans.transId){
+  //   const refundResult = await refundMoMo({
+  //     orderId: id,
+  //     amount: existingDonHang.tonggia,
+  //     transId: existingDonHang.thanhToans[0].transId,
+  //     description: 'Hoàn tiền đơn hàng',
+  //   });
+  //   return {...refundResult, trangthai: updatedDonHang.trangthai};
+  // } else if(existingDonHang.thanhToans.phuongthuc === 'vnpay' && existingDonHang.thanhToans.trangthai && existingDonHang.thanhToans.transId){
+  //   const refundResult = await refundVnPay(req);
+  //   return {...refundResult, trangthai: updatedDonHang.trangthai};
+  // }
+  // else{
     return {...updatedDonHang, trangthai: updatedDonHang.trangthai};
-  }
+  // }
     // // Return updated order
     // return await prismaClient.donHang.findUnique({
     //   where: { ma: updatedDonHang.ma },

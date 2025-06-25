@@ -445,9 +445,8 @@ async function updateSanPham(id, data) {
           });
         }
         // Separate updates and creates
-        const mauSacsToUpdate = mauSacs.filter((ms) => ms.ma && ms.ma !== 0);
-        const mauSacsToCreate = mauSacs.filter((ms) => !ms.ma || ms.ma === 0);
-
+        const mauSacsToUpdate = mauSacs.filter((ms) => ms.ma && ms.ma !== 0 && ms.ma > 0);
+        const mauSacsToCreate = mauSacs.filter((ms) => !ms.ma || ms.ma === 0 || ms.ma < 0);
         // Batch update existing color images
         const updatePromises = mauSacsToUpdate.map((mauSac) =>
           prismaClient.hinhAnhMauSac.update({
