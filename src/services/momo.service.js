@@ -113,7 +113,7 @@ async function handleMoMoIPN(data) {
 }
 async function refundMoMo(data) {
   try {
-    const orderId = data.orderId;
+    const orderId = `${data.orderId}_${Date.now()}`;
     const amount = data.amount;
     const transId = data.transId;
     const description = data.description;
