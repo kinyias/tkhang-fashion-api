@@ -98,6 +98,10 @@ async function login(email, mat_khau) {
     where: { email },
   });
 
+  if(!user){
+    throw new Error('Sai email hoặc mật khẩu');
+  }
+
   if (!user || !user.mat_khau) {
     throw new Error('Sai mật khẩu');
   }
