@@ -302,7 +302,7 @@ async function createDonHang(data, req) {
 
     // Execute order items creation and inventory updates in parallel
     await Promise.all(operations);
-
+    
     // Create payment record if provided
     if (thanhToan) {
       if (thanhToan.phuongthuc === 'momo') {

@@ -1,7 +1,11 @@
 const express = require('express');
 const { body, param, query } = require('express-validator');
 const donHangController = require('../controllers/donhang.controller');
-const { authenticate, authorize, authenticateUser } = require('../middlewares/authMiddleware');
+const {
+  authenticate,
+  authorize,
+  authenticateUser,
+} = require('../middlewares/authMiddleware');
 
 const router = express.Router();
 
@@ -29,7 +33,7 @@ router.get(
   ],
   donHangController.getDonHangWithChiTietById
 );
-// Get order by ID 
+// Get order by ID
 router.get(
   '/:id/xac-nhan',
   [
@@ -118,5 +122,23 @@ router.post('/payment/momo/ipn', express.json(), donHangController.momoIPNHandle
 router.post('/payment/momo/refund', donHangController.momoRefundHandler);
 // VNPay callback URLs
 router.get('/payment/vnpay/return', donHangController.vnpayReturnHandler);
-router.post('/payment/vnpay/ipn', express.json(), donHangController.vnpayIPNHandler);
+router.post(
+  '/payment/vnpay/ipn',
+  express.json(),
+  donHangController.vnpayIPNHandler
+);
+
+// Repayment route
+router.post(
+  '/:id/repayment',
+  authenticate,
+  [
+    param('id').notEmpty().withMessage('ID đơn hàng không được để trống'),
+    body('phuongthuc')
+      .isIn(['momo', 'vnpay'])
+      .withMessage('Phương thức thanh toán không hợp lệ'),
+  ],
+  donHangController.repaymentDonHang
+);
+
 module.exports = router;

@@ -92,40 +92,40 @@ async function handleVnPayReturn(req) {
     const transactionStatus = vnp_Params['vnp_ResponseCode'];
 
     //Kiem tra xem du lieu trong db co hop le hay khong va thong bao ket qua
-    if (transactionStatus !== '00') {
-      await prisma.donHang.delete({
-        where: {
-          ma: orderId,
-        },
-      });
-      return {
-        success: false,
-        data: {
-          orderId: orderId,
-          amount: vnp_Params['vnp_Amount'] / 100,
-          bankCode: vnp_Params['vnp_BankCode'],
-          transactionDate: vnp_Params['vnp_PayDate'],
-          transactionStatus: transactionStatus,
-        },
-      };
-    }
+    // if (transactionStatus !== '00') {
+    //   await prisma.donHang.delete({
+    //     where: {
+    //       ma: orderId,
+    //     },
+    //   });
+    //   return {
+    //     success: false,
+    //     data: {
+    //       orderId: orderId,
+    //       amount: vnp_Params['vnp_Amount'] / 100,
+    //       bankCode: vnp_Params['vnp_BankCode'],
+    //       transactionDate: vnp_Params['vnp_PayDate'],
+    //       transactionStatus: transactionStatus,
+    //     },
+    //   };
+    // }
+    if(transactionStatus == '00'){
     const response = await prisma.thanhToan.updateMany({
       where: {
         madh: orderId,
-        phuongthuc: 'vnpay',
-        // momoOrderId: data.orderId
+        // phuongthuc: 'vnpay',
       },
       data: {
+        phuongthuc: 'vnpay',
         trangthai: true,
         ngaythanhtoan: moment(
           vnp_Params['vnp_PayDate'],
           'YYYYMMDDHHmmss'
         ).toISOString(),
         transId: orderId,
-        // momoTransId: data.transId,
-        // momoResponseTime: new Date(data.responseTime)
       },
     });
+  }
     return {
       success: true,
       code: vnp_Params['vnp_ResponseCode'],
@@ -174,6 +174,7 @@ async function handleVnPayIPN(req) {
         if (paymentStatus == '0') {
           //kiểm tra tình trạng giao dịch trước khi cập nhật tình trạng thanh toán
           if (rspCode == '00') {
+            console.log('thanh toan thanh cong')
             //thanh cong
             //paymentStatus = '1'
             // Ở đây cập nhật trạng thái giao dịch thanh toán thành công vào CSDL của bạn
@@ -323,4 +324,4 @@ module.exports = {
   handleVnPayReturn,
   handleVnPayIPN,
   refundVnPay
-};
+}
