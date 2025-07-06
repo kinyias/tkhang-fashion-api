@@ -251,7 +251,7 @@ async function createDonHang(data, req) {
       const soluong = Number(item.soluong);
       const dongia = Number(item.dongia);
       return sum + soluong * dongia;
-    }, tonggia + tamtinh + phigiaohang + giamgia);
+    }, 0);
     // Create order
     const donHang = await prismaClient.donHang.create({
       data: {
@@ -259,8 +259,8 @@ async function createDonHang(data, req) {
         ten,
         email,
         giamgia,
-        tamtinh: total,
-        tonggia,
+        tamtinh,
+        tonggia: total + phigiaohang + (giamgia || 0),
         diachi,
         thanhpho,
         quan,
