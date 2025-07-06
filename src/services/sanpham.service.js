@@ -445,8 +445,12 @@ async function updateSanPham(id, data) {
           });
         }
         // Separate updates and creates
-        const mauSacsToUpdate = mauSacs.filter((ms) => ms.ma && ms.ma !== 0 && ms.ma > 0);
-        const mauSacsToCreate = mauSacs.filter((ms) => !ms.ma || ms.ma === 0 || ms.ma < 0);
+        const mauSacsToUpdate = mauSacs.filter(
+          (ms) => ms.ma && ms.ma !== 0 && ms.ma > 0
+        );
+        const mauSacsToCreate = mauSacs.filter(
+          (ms) => !ms.ma || ms.ma === 0 || ms.ma < 0
+        );
         // Batch update existing color images
         const updatePromises = mauSacsToUpdate.map((mauSac) =>
           prismaClient.hinhAnhMauSac.update({
@@ -1162,6 +1166,81 @@ async function syncAllProductsToElasticsearch() {
     return false;
   }
 }
+
+// Get cart products with variants
+async function getCartProducts(items) {
+  // Extract product IDs from cart items
+  const productIds = [...new Set(items.map((item) => Number(item.ma)))];
+
+  // Fetch products with their variants and related data
+  const products = await prisma.sanPham.findMany({
+    where: {
+      ma: {
+        in: productIds,
+      },
+    },
+    include: {
+      danhMuc: {
+        select: {
+          ma: true,
+          ten: true,
+        },
+      },
+      loaiSanPham: {
+        select: {
+          ma: true,
+          ten: true,
+        },
+      },
+      thuongHieu: {
+        select: {
+          ma: true,
+          ten: true,
+        },
+      },
+      bienThes: {
+        include: {
+          mauSac: true,
+          kichCo: true,
+        },
+      },
+      hinhAnhMauSacs: {
+        where: {
+          anhChinh: true,
+        },
+      },
+      danhGias: {
+        select: {
+          sosao: true,
+        },
+      },
+    },
+  });
+
+  // Calculate average rating for each product
+  const productsWithRating = products.map((sanPham) => {
+    const totalStars = sanPham.danhGias.reduce(
+      (sum, review) => sum + review.sosao,
+      0
+    );
+    const averageRating =
+      sanPham.danhGias.length > 0
+        ? Math.min(5, Math.max(0, totalStars / sanPham.danhGias.length))
+        : 0;
+
+    // Remove the detailed reviews array and add the average
+    const { danhGias, ...sanPhamWithoutReviews } = sanPham;
+    return {
+      ...sanPhamWithoutReviews,
+      danhGia_trungbinh: Number(averageRating.toFixed(1)),
+    };
+  });
+
+  return {
+    data: productsWithRating,
+  };
+}
+
 module.exports = {
   getAllSanPham,
   getSanPhamById,
@@ -1173,4 +1252,5 @@ module.exports = {
   advancedSearchSanPham,
   syncProductToElasticsearch,
   syncAllProductsToElasticsearch,
+  getCartProducts,
 };

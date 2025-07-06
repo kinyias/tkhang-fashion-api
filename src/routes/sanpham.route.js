@@ -10,13 +10,20 @@ router.get('/', sanPhamController.getAllSanPham);
 
 // Get all products with variants (public)
 router.get('/with-variants', sanPhamController.getAllSanPhamWithVariants);
+
+// Get cart products with variants
+router.post('/cart-products', sanPhamController.getCartProducts);
+
 // Advanced product search with comprehensive filtering (public)
 router.get('/advanced-search', sanPhamController.advancedSearchSanPham);
 router.post('/elasticsearch/create-index', sanPhamController.createIndexES);
 router.post('/elasticsearch/recreate-index', sanPhamController.recreateIndexES);
 router.get('/elasticsearch/sync-all', sanPhamController.syncAllProductsToES);
 router.get('/elasticsearch/health', sanPhamController.checkElasticsearchHealth);
-router.post('/elasticsearch/sync/:productId', sanPhamController.syncProductToES);
+router.post(
+  '/elasticsearch/sync/:productId',
+  sanPhamController.syncProductToES
+);
 // Get product by ID (public)
 router.get('/:id', sanPhamController.getSanPhamById);
 
@@ -31,23 +38,14 @@ router.post(
       .withMessage('Tên sản phẩm không được để trống')
       .isString()
       .withMessage('Tên sản phẩm phải là chuỗi'),
-    body('mota')
-      .optional()
-      .isString()
-      .withMessage('Mô tả phải là chuỗi'),
+    body('mota').optional().isString().withMessage('Mô tả phải là chuỗi'),
     body('giaban')
       .notEmpty()
       .withMessage('Giá bán không được để trống')
       .isNumeric()
       .withMessage('Giá bán phải là số'),
-    body('giagiam')
-      .optional()
-      .isNumeric()
-      .withMessage('Giá giảm phải là số'),
-    body('hinhanh')
-      .optional()
-      .isString()
-      .withMessage('Hình ảnh phải là chuỗi'),
+    body('giagiam').optional().isNumeric().withMessage('Giá giảm phải là số'),
+    body('hinhanh').optional().isString().withMessage('Hình ảnh phải là chuỗi'),
     body('noibat')
       .optional()
       .isBoolean()
@@ -71,10 +69,7 @@ router.post(
       .withMessage('Mã thương hiệu không được để trống')
       .isInt()
       .withMessage('Mã thương hiệu phải là số nguyên'),
-    body('bienThes')
-      .optional()
-      .isArray()
-      .withMessage('Biến thể phải là mảng'),
+    body('bienThes').optional().isArray().withMessage('Biến thể phải là mảng'),
     body('bienThes.*.gia')
       .optional()
       .isNumeric()
@@ -91,10 +86,7 @@ router.post(
       .optional()
       .isInt()
       .withMessage('Mã kích cỡ phải là số nguyên'),
-    body('mauSacs')
-      .optional()
-      .isArray()
-      .withMessage('Màu sắc phải là mảng'),
+    body('mauSacs').optional().isArray().withMessage('Màu sắc phải là mảng'),
     body('mauSacs.*.ten')
       .optional()
       .isString()
@@ -114,7 +106,7 @@ router.post(
     body('mauSacs.*.hinhAnhs.*.anhChinh')
       .optional()
       .isBoolean()
-      .withMessage('Ảnh chính phải là boolean')
+      .withMessage('Ảnh chính phải là boolean'),
   ],
   sanPhamController.createSanPham
 );
@@ -125,26 +117,11 @@ router.put(
   authenticate,
   authorize(['admin']),
   [
-    body('ten')
-      .optional()
-      .isString()
-      .withMessage('Tên sản phẩm phải là chuỗi'),
-    body('mota')
-      .optional()
-      .isString()
-      .withMessage('Mô tả phải là chuỗi'),
-    body('giaban')
-      .optional()
-      .isNumeric()
-      .withMessage('Giá bán phải là số'),
-    body('giagiam')
-      .optional()
-      .isNumeric()
-      .withMessage('Giá giảm phải là số'),
-    body('hinhanh')
-      .optional()
-      .isString()
-      .withMessage('Hình ảnh phải là chuỗi'),
+    body('ten').optional().isString().withMessage('Tên sản phẩm phải là chuỗi'),
+    body('mota').optional().isString().withMessage('Mô tả phải là chuỗi'),
+    body('giaban').optional().isNumeric().withMessage('Giá bán phải là số'),
+    body('giagiam').optional().isNumeric().withMessage('Giá giảm phải là số'),
+    body('hinhanh').optional().isString().withMessage('Hình ảnh phải là chuỗi'),
     body('noibat')
       .optional()
       .isBoolean()
@@ -164,7 +141,7 @@ router.put(
     body('mathuonghieu')
       .optional()
       .isInt()
-      .withMessage('Mã thương hiệu phải là số nguyên')
+      .withMessage('Mã thương hiệu phải là số nguyên'),
   ],
   sanPhamController.updateSanPham
 );
@@ -183,6 +160,5 @@ router.delete(
   authorize(['admin']),
   sanPhamController.deleteSanPham
 );
-
 
 module.exports = router;

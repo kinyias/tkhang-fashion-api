@@ -247,6 +247,11 @@ async function createDonHang(data, req) {
 
   // Use transaction to ensure data consistency
   return await prisma.$transaction(async (prismaClient) => {
+    const total = chiTietDonHangs.reduce((sum, item) => {
+      const soluong = Number(item.soluong);
+      const dongia = Number(item.dongia);
+      return sum + soluong * dongia;
+    }, tonggia + tamtinh + phigiaohang + giamgia);
     // Create order
     const donHang = await prismaClient.donHang.create({
       data: {
@@ -254,7 +259,7 @@ async function createDonHang(data, req) {
         ten,
         email,
         giamgia,
-        tamtinh,
+        tamtinh: total,
         tonggia,
         diachi,
         thanhpho,
@@ -302,7 +307,7 @@ async function createDonHang(data, req) {
 
     // Execute order items creation and inventory updates in parallel
     await Promise.all(operations);
-    
+
     // Create payment record if provided
     if (thanhToan) {
       if (thanhToan.phuongthuc === 'momo') {
