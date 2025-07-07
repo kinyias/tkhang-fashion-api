@@ -119,7 +119,7 @@ model BienThe {
   mauSac          MauSac           @relation(fields: [mamausac], references: [ma])
   kichCo          KichCo           @relation(fields: [makichco], references: [ma])
   chiTietDonHangs ChiTietDonHang[]
-  //  @@unique([masp, mamausac])
+  @@unique([masp, mamausac, makichco])
 }
 
 // KichCo
