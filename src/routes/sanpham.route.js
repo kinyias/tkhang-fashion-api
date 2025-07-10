@@ -161,4 +161,18 @@ router.delete(
   sanPhamController.deleteSanPham
 );
 
+// Update product status or featured state (admin only)
+router.patch(
+  '/:id/toggle',
+  authenticate,
+  authorize(['admin']),
+  [
+    body('field')
+      .isIn(['trangthai', 'noibat'])
+      .withMessage('Field must be either trangthai or noibat'),
+    body('value').isBoolean().withMessage('Value must be a boolean'),
+  ],
+  sanPhamController.toggleProductField
+);
+
 module.exports = router;

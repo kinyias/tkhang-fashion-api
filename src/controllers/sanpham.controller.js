@@ -296,6 +296,35 @@ async function checkElasticsearchHealth(req, res, next) {
     });
   }
 }
+
+// Toggle product status or featured state
+async function toggleProductField(req, res, next) {
+  try {
+    // Check validation errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { id } = req.params;
+    const { field, value } = req.body;
+
+    // Create update data object
+    const updateData = {
+      [field]: value,
+    };
+
+    const updatedProduct = await sanPhamService.updateSanPham(id, updateData);
+
+    return res.status(200).json({
+      message: 'Cập nhật sản phẩm thành công',
+      sanPham: updatedProduct,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   getAllSanPham,
   getSanPhamById,
@@ -311,4 +340,5 @@ module.exports = {
   checkElasticsearchHealth,
   recreateIndexES,
   getCartProducts,
+  toggleProductField,
 };
