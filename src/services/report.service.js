@@ -45,16 +45,14 @@ class ReportService {
         tonggia: true,
       },
     });
-
     // Initialize array with 12 months
     const revenueByMonth = Array(12).fill(0);
 
     // Fill in the revenue for months that have data
     monthlyRevenue.forEach((item) => {
       const month = new Date(item.ngaydat).getMonth();
-      revenueByMonth[month] = Number(item._sum.tonggia);
+      revenueByMonth[month] += Number(item._sum.tonggia);
     });
-
     return revenueByMonth;
   }
 

@@ -260,7 +260,7 @@ async function createDonHang(data, req) {
         email,
         giamgia,
         tamtinh,
-        tonggia: total + phigiaohang + (giamgia || 0),
+        tonggia: total + phigiaohang - (giamgia || 0),
         diachi,
         thanhpho,
         quan,
