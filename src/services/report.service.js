@@ -142,6 +142,91 @@ class ReportService {
       _count: undefined, // Remove the _count field from response
     }));
   }
+
+  // Get revenue by custom date range
+  async getRevenueByDateRange(startDate, endDate) {
+    const revenue = await prisma.donHang.aggregate({
+      where: {
+        trangthai: 'da_giao_hang',
+        ngaydat: {
+          gte: new Date(startDate),
+          lte: new Date(endDate),
+        },
+      },
+      _sum: {
+        tonggia: true,
+      },
+    });
+
+    return revenue._sum.tonggia || 0;
+  }
+
+  // Get revenue by year
+  async getRevenueByYear(year) {
+    const startDate = new Date(year, 0, 1);
+    const endDate = new Date(year, 11, 31, 23, 59, 59);
+    return this.getRevenueByDateRange(startDate, endDate);
+  }
+
+  // Get revenue by month
+  async getRevenueByMonth(year, month) {
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59);
+    return this.getRevenueByDateRange(startDate, endDate);
+  }
+
+  // Get revenue by week
+  async getRevenueByWeek(startDate) {
+    const start = new Date(startDate);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 6);
+    end.setHours(23, 59, 59);
+    return this.getRevenueByDateRange(start, end);
+  }
+
+  // Get detailed revenue report by date range
+  async getDetailedRevenueReport(startDate, endDate, groupBy = 'day') {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    let grouping;
+    if (groupBy === 'month') {
+      grouping = {
+        year: { month: { ngaydat: true } },
+      };
+    } else if (groupBy === 'week') {
+      grouping = {
+        year: { week: { ngaydat: true } },
+      };
+    } else {
+      // default to daily
+      grouping = {
+        ngaydat: true,
+      };
+    }
+
+    const revenue = await prisma.donHang.groupBy({
+      by: ['ngaydat'],
+      where: {
+        trangthai: 'da_giao_hang',
+        ngaydat: {
+          gte: start,
+          lte: end,
+        },
+      },
+      _sum: {
+        tonggia: true,
+      },
+      orderBy: {
+        ngaydat: 'asc',
+      },
+    });
+
+    return revenue.map((item) => ({
+      date: item.ngaydat,
+      revenue: Number(item._sum.tonggia) || 0,
+    }));
+  }
 }
 
 module.exports = new ReportService();

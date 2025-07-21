@@ -14,4 +14,10 @@ router.get('/customer-stats/:customerId', reportController.getCustomerStats);
 // Get featured products with sales count
 router.get('/featured-products', reportController.getFeaturedProducts);
 
+// New revenue reporting routes
+router.get('/revenue/year', reportController.getRevenueByYear);
+router.get('/revenue/month', reportController.getRevenueByMonth);
+router.get('/revenue/week', reportController.getRevenueByWeek);
+router.get('/revenue/report', reportController.getDetailedRevenueReport);
+
 module.exports = router;
