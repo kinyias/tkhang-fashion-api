@@ -147,13 +147,12 @@ class ReportService {
           bienThe.chiTietDonHangs.reduce((sum, ct) => sum + ct.soluong, 0)
         );
       }, 0);
-  
+
       return {
         ...product,
         totalSales,
       };
     });
-  
 
     return transformed
       .sort((a, b) => b.totalSales - a.totalSales)
@@ -249,6 +248,34 @@ class ReportService {
       date: item.ngaydat,
       revenue: Number(item._sum.tonggia) || 0,
     }));
+  }
+
+  // Get orders count by status
+  async getOrdersByStatus() {
+    const orderStatuses = [
+      'da_dat',
+      'dang_xu_ly',
+      'da_huy',
+      'dang_giao_hang',
+      'da_giao_hang',
+    ];
+
+    const ordersByStatus = await Promise.all(
+      orderStatuses.map(async (status) => {
+        const count = await prisma.donHang.count({
+          where: {
+            trangthai: status,
+          },
+        });
+
+        return {
+          status,
+          count,
+        };
+      })
+    );
+
+    return ordersByStatus;
   }
 }
 

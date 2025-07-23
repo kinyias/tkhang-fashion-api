@@ -20,4 +20,7 @@ router.get('/revenue/month', reportController.getRevenueByMonth);
 router.get('/revenue/week', reportController.getRevenueByWeek);
 router.get('/revenue/report', reportController.getDetailedRevenueReport);
 
+// Get orders count by status
+router.get('/orders-by-status', reportController.getOrdersByStatus);
+
 module.exports = router;

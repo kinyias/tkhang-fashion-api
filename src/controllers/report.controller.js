@@ -112,6 +112,17 @@ async function getDetailedRevenueReport(req, res) {
   }
 }
 
+// Get orders by status
+async function getOrdersByStatus(req, res) {
+  try {
+    const orderStats = await reportService.getOrdersByStatus();
+    return res.status(200).json(orderStats);
+  } catch (error) {
+    console.error('Error getting orders by status:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+}
+
 module.exports = {
   getDashboardStats,
   getMonthlyRevenue,
@@ -121,4 +132,5 @@ module.exports = {
   getRevenueByMonth,
   getRevenueByWeek,
   getDetailedRevenueReport,
+  getOrdersByStatus,
 };
