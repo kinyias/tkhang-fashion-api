@@ -64,7 +64,7 @@ async function sendNewOrderNotificationToAdmin(donhang) {
         ${donhang.chiTietDonHangs
           .map(
             (item) => `
-          <li>${item.sanPham.ten} - ${item.soluong} x ${formatCurrency(
+          <li>${item.bienThe.sanPham.ten} - ${item.soluong} x ${formatCurrency(
               item.dongia.toLocaleString()
             )}</li>
         `
@@ -98,7 +98,7 @@ async function sendNewOrderNotificationToUser(donhang) {
         ${donhang.chiTietDonHangs
           .map(
             (item) => `
-          <li>${item.sanPham.ten} - ${item.soluong} x ${formatCurrency(
+          <li>${item.bienThe.sanPham.ten} - ${item.soluong} x ${formatCurrency(
               item.dongia.toLocaleString()
             )}</li>
         `

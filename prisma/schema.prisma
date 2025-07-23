@@ -102,7 +102,6 @@ model SanPham {
 
   bienThes        BienThe[]
    hinhAnhMauSacs HinhAnhMauSac[]
-  chiTietDonHangs ChiTietDonHang[]
   danhGias        DanhGia[]
 }
 
@@ -187,11 +186,8 @@ model ChiTietDonHang {
   ma        Int     @id @default(autoincrement())
   soluong   Int
   dongia    Decimal @db.Decimal(30, 3)
-  masp      Int
   madh      String
   mabienthe Int
-
-  sanPham SanPham @relation(fields: [masp], references: [ma])
   donHang DonHang @relation(fields: [madh], references: [ma],  onDelete: Cascade)
   bienThe BienThe @relation(fields: [mabienthe], references: [ma])
 }

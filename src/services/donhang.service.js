@@ -57,17 +57,17 @@ async function getAllDonHang(page = 1, limit = 10, search = '', filters = {}) {
         khuyenMai: true,
         chiTietDonHangs: {
           include: {
-            sanPham: {
-              select: {
-                ma: true,
-                ten: true,
-                hinhanh: true,
-              },
-            },
             bienThe: {
               include: {
                 mauSac: true,
                 kichCo: true,
+                sanPham: {
+                  select: {
+                    ma: true,
+                    ten: true,
+                    hinhanh: true,
+                  },
+                },
               },
             },
           },
@@ -114,17 +114,17 @@ async function getDonHangWithChiTietById(id) {
       khuyenMai: true,
       chiTietDonHangs: {
         include: {
-          sanPham: {
-            select: {
-              ma: true,
-              ten: true,
-              hinhanh: true,
-            },
-          },
           bienThe: {
             include: {
               mauSac: true,
               kichCo: true,
+              sanPham: {
+                select: {
+                  ma: true,
+                  ten: true,
+                  hinhanh: true,
+                },
+              },
             },
           },
         },
@@ -178,17 +178,17 @@ async function getDonHangByUserId(userId, page = 1, limit = 10, trangthai) {
         khuyenMai: true,
         chiTietDonHangs: {
           include: {
-            sanPham: {
-              select: {
-                ma: true,
-                ten: true,
-                hinhanh: true,
-              },
-            },
             bienThe: {
               include: {
                 mauSac: true,
                 kichCo: true,
+                sanPham: {
+                  select: {
+                    ma: true,
+                    ten: true,
+                    hinhanh: true,
+                  },
+                },
               },
             },
           },
@@ -281,7 +281,6 @@ async function createDonHang(data, req) {
     const chiTietData = chiTietDonHangs.map((item) => ({
       soluong: Number(item.soluong),
       dongia: item.dongia,
-      masp: Number(item.masp),
       madh: donHang.ma,
       mabienthe: Number(item.mabienthe),
     }));
@@ -349,11 +348,15 @@ async function createDonHang(data, req) {
               },
               chiTietDonHangs: {
                 include: {
-                  sanPham: {
-                    select: {
-                      ma: true,
-                      ten: true,
-                      hinhanh: true,
+                   bienThe: {
+                    include: {
+                      sanPham: {
+                        select: {
+                          ma: true,
+                          ten: true,
+                          hinhanh: true,
+                        },
+                      },
                     },
                   },
                 },
@@ -396,11 +399,15 @@ async function createDonHang(data, req) {
               },
               chiTietDonHangs: {
                 include: {
-                  sanPham: {
-                    select: {
-                      ma: true,
-                      ten: true,
-                      hinhanh: true,
+                    bienThe: {
+                      include: {
+                        sanPham: {
+                          select: {
+                            ma: true,
+                            ten: true,
+                            hinhanh: true,
+                          },
+                        },
                     },
                   },
                 },
@@ -444,11 +451,15 @@ async function createDonHang(data, req) {
         },
         chiTietDonHangs: {
           include: {
-            sanPham: {
-              select: {
-                ma: true,
-                ten: true,
-                hinhanh: true,
+            bienThe: {
+              include: {
+                sanPham: {
+                  select: {
+                    ma: true,
+                    ten: true,
+                    hinhanh: true,
+                  },
+                },
               },
             },
           },
@@ -523,17 +534,17 @@ async function updateDonHangStatus(id, trangthai, ngaygiao = null, mavandon = nu
       khuyenMai: true,
       chiTietDonHangs: {
         include: {
-          sanPham: {
-            select: {
-              ma: true,
-              ten: true,
-              hinhanh: true,
-            },
-          },
           bienThe: {
             include: {
               mauSac: true,
               kichCo: true,
+              sanPham: {
+                select: {
+                  ma: true,
+                  ten: true,
+                  hinhanh: true,
+                },
+              },
             },
           },
         },

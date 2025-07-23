@@ -94,7 +94,7 @@ class ReportService {
   async getFeaturedProducts(limit = 5) {
     const featuredProducts = await prisma.sanPham.findMany({
       where: {
-        noibat: true,
+        // noibat: true,
         trangthai: true, // Only active products
       },
       select: {
@@ -103,13 +103,16 @@ class ReportService {
         giaban: true,
         giagiam: true,
         hinhanh: true,
-        _count: {
+        bienThes: {
           select: {
             chiTietDonHangs: {
               where: {
                 donHang: {
-                  trangthai: 'da_giao_hang', // Only count completed orders
+                  trangthai: 'da_giao_hang',
                 },
+              },
+              select: {
+                soluong: true,
               },
             },
           },
@@ -127,20 +130,40 @@ class ReportService {
           },
         },
       },
-      orderBy: {
-        chiTietDonHangs: {
-          _count: 'desc',
-        },
-      },
+      // orderBy: {
+      //   bienThes: {
+      //     chiTietDonHangs: {
+      //       _count: 'desc',
+      //     },
+      //   }
+      // },
       take: limit,
     });
 
+    const transformed = featuredProducts.map((product) => {
+      const totalSales = product.bienThes.reduce((total, bienThe) => {
+        return (
+          total +
+          bienThe.chiTietDonHangs.reduce((sum, ct) => sum + ct.soluong, 0)
+        );
+      }, 0);
+  
+      return {
+        ...product,
+        totalSales,
+      };
+    });
+  
+
+    return transformed
+      .sort((a, b) => b.totalSales - a.totalSales)
+      .map(({ bienThes, ...rest }) => rest);
     // Transform the response to include total sales
-    return featuredProducts.map((product) => ({
-      ...product,
-      totalSales: product._count.chiTietDonHangs,
-      _count: undefined, // Remove the _count field from response
-    }));
+    // return featuredProducts.map((product) => ({
+    //   ...product,
+    //   totalSales: product._count.bienThes,
+    //   _count: undefined, // Remove the _count field from response
+    // }));
   }
 
   // Get revenue by custom date range

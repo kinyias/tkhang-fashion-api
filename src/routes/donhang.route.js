@@ -73,7 +73,6 @@ router.post(
     body('phuongthucgiaohang').notEmpty().withMessage('Quận không được để trống'),
     body('phigiaohang').isFloat({ min: 0 }).withMessage('Phí giao hàng phải là số dương'),
     body('chiTietDonHangs').isArray({ min: 1 }).withMessage('Đơn hàng phải có ít nhất một sản phẩm'),
-    body('chiTietDonHangs.*.masp').isInt().withMessage('Mã sản phẩm phải là số nguyên'),
     body('chiTietDonHangs.*.mabienthe').isInt().withMessage('Mã biến thể phải là số nguyên'),
     body('chiTietDonHangs.*.soluong').isInt({ min: 1 }).withMessage('Số lượng phải là số nguyên dương'),
     body('chiTietDonHangs.*.dongia').isFloat({ min: 0 }).withMessage('Đơn giá phải là số dương'),
