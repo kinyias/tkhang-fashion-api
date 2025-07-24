@@ -527,25 +527,20 @@ async function updateSanPham(id, data) {
 
 // Delete product
 async function deleteSanPham(id) {
-  // Check if product exists
-  const existingSanPham = await prisma.sanPham.findUnique({
-    where: { ma: Number(id) },
-    include: {
-      _count: {
-        select: {
-          chiTietDonHangs: true,
-          danhGias: true,
-        },
+  const chiTietDonHangsCount = await prisma.chiTietDonHang.count({
+    where: {
+      bienThe: {
+        masp: Number(id),
       },
     },
   });
 
-  if (!existingSanPham) {
-    throw new ApiError(404, 'Không tìm thấy sản phẩm');
-  }
+  // if (!chiTietDonHangsCount) {
+  //   throw new ApiError(404, 'Không tìm thấy sản phẩm');
+  // }
 
   // Check if product has related order details or reviews
-  if (existingSanPham._count.chiTietDonHangs > 0) {
+  if (chiTietDonHangsCount > 0) {
     throw new ApiError(400, 'Không thể xóa sản phẩm đang có đơn hàng liên kết');
   }
 
@@ -576,13 +571,9 @@ async function deleteManySanPham(ids) {
         in: productIds,
       },
     },
-    include: {
-      _count: {
-        select: {
-          chiTietDonHangs: true,
-          danhGias: true,
-        },
-      },
+    select: {
+      ma: true,
+      ten: true,
     },
   });
 
@@ -592,7 +583,27 @@ async function deleteManySanPham(ids) {
   }
 
   // Check if any product has related orders
-  const withOrders = products.filter((p) => p._count.chiTietDonHangs > 0);
+   const relatedChiTietDonHangs = await prisma.chiTietDonHang.findMany({
+    where: {
+      bienThe: {
+        masp: { in: productIds },
+      },
+    },
+    select: {
+      bienThe: {
+        select: {
+          masp: true,
+        },
+      },
+    },
+  });
+
+  const productIdsWithOrders = new Set(
+    relatedChiTietDonHangs.map((item) => item.bienThe.masp)
+  );
+
+  const withOrders = products.filter((p) => productIdsWithOrders.has(p.ma));
+
   if (withOrders.length > 0) {
     const productNames = withOrders.map((p) => p.ten).join(', ');
     throw new ApiError(
